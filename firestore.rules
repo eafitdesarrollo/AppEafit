@@ -1,0 +1,130 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function myUid() {
+      return request.auth.uid;
+    }
+
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(myUid())).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && myRole() == 'admin';
+    }
+
+    function isStaffOrAdmin() {
+      return isSignedIn() && (myRole() == 'staff' || myRole() == 'admin');
+    }
+
+    function isProfessor() {
+      return isSignedIn() && myRole() == 'professor';
+    }
+
+    // ----- Users -----
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && myUid() == uid;
+      // Owners may edit their own profile, but never their role or active flag.
+      allow update: if isSignedIn() && myUid() == uid &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.active == resource.data.active
+        || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ----- News / institutional announcements -----
+    match /news/{newsId} {
+      allow read: if isSignedIn();
+      allow create: if isProfessor() || isStaffOrAdmin();
+      allow update, delete: if isStaffOrAdmin();
+    }
+
+    // ----- Academic calendar -----
+    match /calendarEvents/{eventId} {
+      allow read: if isSignedIn();
+      allow write: if isStaffOrAdmin();
+    }
+
+    // ----- Courses & enrollments -----
+    match /courses/{courseId} {
+      allow read: if isSignedIn();
+      allow write: if isStaffOrAdmin();
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow read: if isSignedIn();
+      allow write: if isStaffOrAdmin();
+    }
+
+    // ----- Grades: only the owning student and any professor may read/write -----
+    match /grades/{gradeId} {
+      allow read: if isSignedIn() &&
+        (resource.data.studentId == myUid() || isProfessor() || isStaffOrAdmin());
+      allow create, update: if isProfessor() || isStaffOrAdmin();
+      allow delete: if isStaffOrAdmin();
+    }
+
+    // ----- Attendance -----
+    match /attendance/{sessionId} {
+      allow read: if isProfessor() || isStaffOrAdmin();
+      allow create: if isProfessor();
+      allow update, delete: if isStaffOrAdmin();
+    }
+
+    // ----- Teacher evaluations: write-only for students, readable by staff/admin -----
+    match /teacherEvaluations/{evalId} {
+      allow read: if isStaffOrAdmin();
+      allow create: if isSignedIn() && request.resource.data.studentId == myUid();
+      allow update, delete: if isAdmin();
+    }
+
+    // ----- Lost & found -----
+    match /lostItems/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.reportedBy == myUid();
+      allow update: if isStaffOrAdmin() || (isSignedIn() && resource.data.reportedBy == myUid());
+      allow delete: if isStaffOrAdmin();
+    }
+
+    // ----- Spaces & reservations -----
+    match /spaces/{spaceId} {
+      allow read: if isSignedIn();
+      allow write: if isStaffOrAdmin();
+    }
+
+    match /reservations/{reservationId} {
+      allow read: if isSignedIn() &&
+        (resource.data.userId == myUid() || isStaffOrAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == myUid();
+      allow update: if isStaffOrAdmin() ||
+        (isSignedIn() && resource.data.userId == myUid() && request.resource.data.status == 'cancelled');
+      allow delete: if isStaffOrAdmin();
+    }
+
+    // ----- Library loans -----
+    match /loans/{loanId} {
+      allow read: if isSignedIn() &&
+        (resource.data.studentId == myUid() || isStaffOrAdmin());
+      allow update: if isSignedIn() &&
+        (resource.data.studentId == myUid() || isStaffOrAdmin());
+      allow create, delete: if isStaffOrAdmin();
+    }
+
+    // ----- Notifications -----
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() &&
+        (resource.data.targetUserId == myUid() ||
+         resource.data.targetRole == 'all' ||
+         resource.data.targetRole == myRole());
+      allow update: if isSignedIn();
+      allow create, delete: if isAdmin();
+    }
+  }
+}

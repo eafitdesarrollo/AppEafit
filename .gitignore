@@ -1,0 +1,37 @@
+*.iml
+.gradle/
+/local.properties
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.aab
+
+# Android Studio
+.idea/*
+!.idea/codeStyles
+!.idea/runConfigurations.xml
+*.hprof
+.navigation/
+
+# Keystores - never commit real signing keys
+*.jks
+*.keystore
+keystore.properties
+
+# Firebase - never commit real service credentials
+app/google-services.json
+**/firebase-adminsdk-*.json
+serviceAccountKey.json
+*.p12
+
+# Environment / secrets
+*.env
+.env.*
+secrets.properties
+
+# Build outputs
+app/build/
+app/release/

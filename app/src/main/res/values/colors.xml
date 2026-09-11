@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="eafit_blue">#146AEF</color>
+    <color name="eafit_navy">#0A1130</color>
+    <color name="eafit_cyan">#00A9E0</color>
+    <color name="eafit_black">#0A0A0A</color>
+    <color name="eafit_white">#FFFFFF</color>
+</resources>

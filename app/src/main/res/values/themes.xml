@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AppEafit" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/eafit_navy</item>
+        <item name="android:navigationBarColor">@color/eafit_white</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.AppEafit.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/eafit_navy</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.AppEafit</item>
+    </style>
+</resources>

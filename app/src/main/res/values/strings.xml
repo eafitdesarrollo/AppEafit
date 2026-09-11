@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EAFIT App</string>
+    <string name="default_notification_channel_id">eafit_general_channel</string>
+    <string name="default_notification_channel_name">Notificaciones EAFIT</string>
+
+    <!-- Navigation -->
+    <string name="nav_inicio">Inicio</string>
+    <string name="nav_servicios">Servicios</string>
+    <string name="nav_carnet">Carnet</string>
+    <string name="nav_perfil">Perfil</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_title">Bienvenido a EAFIT</string>
+    <string name="auth_welcome_subtitle">Inicia sesión con tu correo institucional</string>
+    <string name="auth_email_label">Correo institucional</string>
+    <string name="auth_email_placeholder">nombre.apellido@eafit.edu.co</string>
+    <string name="auth_password_label">Contraseña</string>
+    <string name="auth_login_button">Iniciar sesión</string>
+    <string name="auth_forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="auth_no_account">¿No tienes cuenta? Regístrate</string>
+    <string name="auth_have_account">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="auth_register_title">Crear cuenta de estudiante</string>
+    <string name="auth_full_name_label">Nombres y apellidos</string>
+    <string name="auth_student_id_label">Código estudiantil</string>
+    <string name="auth_program_label">Programa académico</string>
+    <string name="auth_confirm_password_label">Confirmar contraseña</string>
+    <string name="auth_register_button">Crear cuenta</string>
+    <string name="auth_reset_password_title">Recuperar contraseña</string>
+    <string name="auth_reset_password_body">Te enviaremos un enlace a tu correo institucional para restablecer tu contraseña.</string>
+    <string name="auth_reset_password_button">Enviar enlace</string>
+    <string name="auth_reset_password_sent">Enlace enviado. Revisa tu correo institucional.</string>
+    <string name="auth_error_invalid_domain">Debes usar tu correo institucional @eafit.edu.co</string>
+    <string name="auth_error_generic">No pudimos completar la solicitud. Intenta de nuevo.</string>
+
+    <!-- Common -->
+    <string name="common_loading">Cargando…</string>
+    <string name="common_retry">Reintentar</string>
+    <string name="common_save">Guardar</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_accept">Aceptar</string>
+    <string name="common_search_hint">Busca aquí</string>
+    <string name="common_error_generic">Ocurrió un error inesperado</string>
+    <string name="common_empty_state">No hay nada por aquí todavía</string>
+    <string name="common_offline_banner">Sin conexión · mostrando datos guardados</string>
+    <string name="common_see_all">Ver todo</string>
+    <string name="common_logout">Cerrar sesión</string>
+    <string name="common_logout_confirm">¿Seguro que quieres cerrar sesión?</string>
+
+    <!-- Profile -->
+    <string name="profile_edit_data">Editar datos personales</string>
+    <string name="profile_change_password">Cambio de contraseña</string>
+    <string name="profile_settings">Configuración</string>
+    <string name="profile_app_version">Versión %1$s</string>
+
+    <!-- Carnet -->
+    <string name="carnet_share">Compartir contacto</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">Notificaciones</string>
+    <string name="notifications_empty">Estás al día, no tienes notificaciones nuevas</string>
+
+    <!-- Student services -->
+    <string name="service_grades">Mis notas</string>
+    <string name="service_schedule">Horario</string>
+    <string name="service_gpa_calculator">Calculadora de promedio</string>
+    <string name="service_library">Biblioteca</string>
+    <string name="service_lost_items">Objetos perdidos</string>
+    <string name="service_space_reservation">Reserva de espacios</string>
+    <string name="service_academic_calendar">Calendario académico</string>
+    <string name="service_teacher_evaluation">Evaluación docente</string>
+
+    <!-- Professor services -->
+    <string name="service_my_courses">Mis cursos</string>
+    <string name="service_attendance">Tomar asistencia</string>
+    <string name="service_grade_entry">Cargar notas</string>
+    <string name="service_announcements">Anuncios</string>
+
+    <!-- Staff services -->
+    <string name="service_directory">Directorio institucional</string>
+    <string name="service_manage_announcements">Gestionar anuncios</string>
+    <string name="service_manage_reservations">Gestionar reservas</string>
+    <string name="service_manage_lost_items">Gestionar objetos perdidos</string>
+
+    <!-- Admin services -->
+    <string name="service_manage_users">Gestión de usuarios</string>
+    <string name="service_manage_content">Gestión de contenido</string>
+    <string name="service_broadcast">Enviar notificación</string>
+    <string name="service_stats">Estadísticas</string>
+</resources>
