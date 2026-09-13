@@ -238,13 +238,31 @@ permisos DEBE hacerse ahí, nunca asumir que "la UI ya lo bloquea".
    staff/admin podían leer, lo que dejaba inoperante el control de "ya evaluado" desde
    el propio cliente.
 
-**Recordatorio operativo**: estos cambios están en el archivo `firestore.rules` del
-repo, pero **no tienen efecto en producción hasta que se desplieguen**:
-```
-firebase deploy --only firestore:rules,firestore:indexes,storage
-```
-Si lees esto y no sabes si ya se desplegaron, pregunta o revisa la consola de Firebase
-del proyecto antes de asumir que están activas.
+**Estado de despliegue (actualizado 2026-09-13, tarde):**
+
+- ✅ **`firestore.rules` YA ESTÁ DESPLEGADO en producción** (proyecto `appeafit-297d5`),
+  con los 4 cambios de seguridad de arriba activos. Verificado con
+  `firebase deploy --only firestore:rules` → `Deploy complete!`.
+- ⏳ **`firestore.indexes.json` pendiente de desplegar.** No es un tema de seguridad
+  (son solo índices de rendimiento de consultas), así que no es urgente. Falla con
+  `403` al desplegar porque la cuenta de servicio usada para el deploy necesita el rol
+  **"Administrador de índices de Cloud Datastore"** (`roles/datastore.indexAdmin`) en
+  IAM del proyecto GCP. Comando para reintentar una vez agregado ese rol:
+  ```
+  firebase deploy --only firestore:indexes --project appeafit-297d5
+  ```
+- ⏳ **`storage.rules` pendiente de desplegar — bloqueado por facturación, no por
+  código.** Firebase quitó el plan gratuito para Storage; el proyecto necesita que el
+  cliente (EAFIT) active un plan de pago (agregar tarjeta / plan Blaze) antes de poder
+  siquiera crear el bucket de Storage. **Decisión del 2026-09-13 (Santiago Guerrero
+  Parrado): dejarlo pendiente hasta que el cliente pague la cuenta de Firebase.**
+  Cuando se resuelva: ir a `https://console.firebase.google.com/project/appeafit-297d5/storage`,
+  completar el asistente de "Comenzar" para crear el bucket, y luego
+  `firebase deploy --only storage --project appeafit-297d5`.
+
+Si tocas `firestore.rules`/`storage.rules` de nuevo en el futuro, recuerda que hay que
+volver a desplegar — editar el archivo local no cambia nada en producción hasta correr
+el comando de deploy (o pegar el contenido a mano en la consola de Firebase).
 
 ---
 
@@ -286,6 +304,30 @@ Todo lo listado aquí fue identificado en la auditoría del 2026-09-13 (sección
 **no** se corrigió todavía, por requerir infraestructura adicional (Cloud Functions),
 ser de alcance mayor, o ser de severidad baja/cosmética. Quien retome el proyecto puede
 usar esta lista como backlog priorizado.
+
+### Pendientes de despliegue (no de código — ver sección 4 para detalle y comandos)
+- **Índices de Firestore** (`firestore.indexes.json`): falta un rol de IAM
+  (`roles/datastore.indexAdmin`) en la cuenta de servicio de deploy. No urgente, es
+  solo rendimiento de consultas.
+- **Reglas de Storage** (`storage.rules`): bloqueado porque Firebase ya no tiene plan
+  gratuito para Storage — requiere que el cliente active facturación primero. Decisión
+  2026-09-13: esperar a que EAFIT pague la cuenta de Firebase.
+
+### Seguimiento de seguridad — cuenta de servicio usada para el deploy del 2026-09-13
+Para poder desplegar `firestore.rules` sin una terminal interactiva disponible, se creó
+una clave de cuenta de servicio (Firebase Admin SDK) del proyecto `appeafit-297d5` y se
+le agregaron estos roles en IAM (además de los que ya tenía):
+`Consumidor de Service Usage`, `Administrador de Firebase Rules`, `Administrador de
+Firebase`. La clave privada (.json) se descargó, se usó una sola vez desde la máquina
+local, y se borró inmediatamente después (`rm` confirmado, no quedó copia local). **No
+se revocó/eliminó la clave ni los roles agregados en la consola de Google Cloud** — la
+cuenta de servicio `firebase-adminsdk-fbsvc@appeafit-297d5.iam.gserviceaccount.com`
+sigue teniendo esos permisos adicionales y podría existir la clave privada como
+credencial activa en IAM → Cuentas de servicio → Claves. **Recomendación pendiente**:
+alguien con acceso a la consola debería revisar
+`https://console.cloud.google.com/iam-admin/serviceaccounts?project=appeafit-297d5`,
+confirmar si esa clave sigue listada y, si ya no se necesita para despliegues futuros,
+eliminarla (no los roles, que sí hacen falta para el próximo deploy de índices).
 
 ### Requieren infraestructura adicional (Cloud Functions / backend)
 - **QR del carnet digital falsificable**: `CarnetScreen.kt` codifica
@@ -549,3 +591,22 @@ configuración, pendientes) y dos entradas de este registro cronológico: la del
 2026-09-12 (creación inicial del proyecto completo) y esta del 2026-09-13 (auditoría +
 correcciones). A partir de ahora, toda persona o IA que trabaje en este proyecto debe
 seguir la regla de la sección 0.
+
+**16. Push a GitHub.** Se subió el commit con todas las correcciones de esta entrada
+más `BITACORA.md` a `origin/main` (`https://github.com/eafitdesarrollo/AppEafit.git`).
+
+**17. Despliegue de `firestore.rules` a producción.** Sin una terminal interactiva
+disponible para `firebase login`, se generó una clave de cuenta de servicio (Firebase
+Admin SDK) del proyecto `appeafit-297d5`, se le agregaron los roles de IAM necesarios
+(ver sección 6, "Seguimiento de seguridad") y se corrió
+`firebase deploy --only firestore:rules --project appeafit-297d5`, con resultado
+`Deploy complete!`. **Las 4 correcciones de seguridad de `firestore.rules` descritas en
+el punto 2 de esta misma entrada ya están activas en producción**, no solo en el
+repositorio. La clave privada de la cuenta de servicio se usó una sola vez y se borró
+inmediatamente después de terminar.
+
+Quedaron pendientes de desplegar (no de código, ver sección 6 para el detalle): los
+índices de `firestore.indexes.json` (falta un rol de IAM adicional, no urgente) y
+`storage.rules` (Firebase ya no tiene plan gratuito para Storage; decisión de Santiago
+Guerrero Parrado del 2026-09-13: esperar a que el cliente EAFIT pague la cuenta de
+Firebase antes de continuar con esto).
