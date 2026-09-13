@@ -141,7 +141,8 @@ fun DocumentSnapshot.toLoan(): Loan = Loan(
     itemTitle = getString("itemTitle").orEmpty(),
     loanedAt = getLong("loanedAt") ?: 0L,
     dueAt = getLong("dueAt") ?: 0L,
-    returned = getBoolean("returned") ?: false
+    returned = getBoolean("returned") ?: false,
+    renewalCount = getLong("renewalCount")?.toInt() ?: 0
 )
 
 fun DocumentSnapshot.toSpace(): Space = Space(

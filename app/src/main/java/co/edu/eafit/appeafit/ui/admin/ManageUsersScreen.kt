@@ -14,8 +14,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.SupervisedUserCircle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,10 +53,29 @@ import kotlinx.coroutines.launch
 fun ManageUsersScreen(container: AppContainer, onBack: () -> Unit) {
     var users by remember { mutableStateOf<List<User>>(emptyList()) }
     var query by remember { mutableStateOf("") }
+    // 2026-09-13: antes un admin podía quitarse (o quitarle a otro) el rol de admin, o
+    // desactivar su cuenta, con un solo clic — si era el único admin activo, la app quedaba
+    // sin ningún administrador y la única recuperación era manual desde la consola de
+    // Firebase. Ahora, si la persona es la última cuenta admin activa, se pide confirmación
+    // explícita antes de aplicar el cambio.
+    var pendingRoleChange by remember { mutableStateOf<Pair<User, Role>?>(null) }
+    var pendingDeactivate by remember { mutableStateOf<User?>(null) }
     val scope = rememberCoroutineScope()
 
     fun reload() {
         scope.launch { container.userRepository.listUsers().onSuccess { users = it } }
+    }
+
+    fun isLastActiveAdmin(person: User): Boolean =
+        person.role == Role.ADMIN && person.active &&
+            users.count { it.role == Role.ADMIN && it.active } <= 1
+
+    fun applyRoleChange(person: User, role: Role) {
+        scope.launch { container.userRepository.updateRole(person.uid, role); reload() }
+    }
+
+    fun applyActiveChange(person: User, active: Boolean) {
+        scope.launch { container.userRepository.setActive(person.uid, active); reload() }
     }
 
     LaunchedEffect(Unit) { reload() }
@@ -98,7 +119,11 @@ fun ManageUsersScreen(container: AppContainer, onBack: () -> Unit) {
                                     Switch(
                                         checked = person.active,
                                         onCheckedChange = { active ->
-                                            scope.launch { container.userRepository.setActive(person.uid, active); reload() }
+                                            if (!active && isLastActiveAdmin(person)) {
+                                                pendingDeactivate = person
+                                            } else {
+                                                applyActiveChange(person, active)
+                                            }
                                         }
                                     )
                                 }
@@ -117,7 +142,11 @@ fun ManageUsersScreen(container: AppContainer, onBack: () -> Unit) {
                                                 text = { Text(role.label) },
                                                 onClick = {
                                                     roleMenuExpanded = false
-                                                    scope.launch { container.userRepository.updateRole(person.uid, role); reload() }
+                                                    if (role != Role.ADMIN && isLastActiveAdmin(person)) {
+                                                        pendingRoleChange = person to role
+                                                    } else {
+                                                        applyRoleChange(person, role)
+                                                    }
                                                 }
                                             )
                                         }
@@ -129,5 +158,39 @@ fun ManageUsersScreen(container: AppContainer, onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    pendingRoleChange?.let { (person, role) ->
+        AlertDialog(
+            onDismissRequest = { pendingRoleChange = null },
+            title = { Text("¿Quitar el último administrador?") },
+            text = { Text("${person.fullName.ifBlank { person.email }} es el único administrador activo. Si le quitas el rol de admin, nadie más podrá gestionar usuarios ni contenido hasta que lo restaures manualmente desde la consola de Firebase. ¿Seguro que quieres continuar?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    applyRoleChange(person, role)
+                    pendingRoleChange = null
+                }) { Text("Sí, quitar rol de admin") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRoleChange = null }) { Text(stringResource(R.string.common_cancel)) }
+            }
+        )
+    }
+
+    pendingDeactivate?.let { person ->
+        AlertDialog(
+            onDismissRequest = { pendingDeactivate = null },
+            title = { Text("¿Desactivar el último administrador?") },
+            text = { Text("${person.fullName.ifBlank { person.email }} es el único administrador activo. Si lo desactivas, nadie más podrá gestionar usuarios ni contenido hasta que lo reactives manualmente desde la consola de Firebase. ¿Seguro que quieres continuar?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    applyActiveChange(person, false)
+                    pendingDeactivate = null
+                }) { Text("Sí, desactivar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeactivate = null }) { Text(stringResource(R.string.common_cancel)) }
+            }
+        )
     }
 }

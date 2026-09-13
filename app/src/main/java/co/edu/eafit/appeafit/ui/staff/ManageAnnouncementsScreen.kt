@@ -56,7 +56,12 @@ fun ManageAnnouncementsScreen(container: AppContainer, authorId: String, onBack:
         scope.launch { container.newsRepository.refresh() }
     }
 
+    // Antes esta pantalla solo leía el caché local (Room) y nunca llamaba a refresh() al
+    // abrirse — solo se refrescaba después de publicar/borrar. Si el caché estaba vacío
+    // (instalación nueva, o cambios hechos desde otro dispositivo/la consola), la pantalla
+    // se veía vacía aunque sí hubiera anuncios en Firestore.
     LaunchedEffect(Unit) {
+        reload()
         container.newsRepository.observeCached().collect { news = it }
     }
 

@@ -75,12 +75,18 @@ class CourseRepository(
         enrollmentDao.clearForStudent(studentId)
         enrollmentDao.upsertAll(courseIds.map { CachedEnrollmentEntity(studentId, it) })
         if (courseIds.isNotEmpty()) {
-            val courses = firestore.collection(COURSES_COLLECTION)
-                .whereIn("__name__", courseIds.take(30))
-                .get()
-                .await()
-                .documents
-                .map { it.toCourse() }
+            // Firestore limita whereIn a 30 valores por consulta: antes de esto, un
+            // estudiante con más de 30 cursos matriculados simplemente dejaba de ver los
+            // cursos 31 en adelante (se truncaba con .take(30) sin ningún aviso). Ahora se
+            // consulta en bloques de 30 y se combinan los resultados.
+            val courses = courseIds.chunked(30).flatMap { chunk ->
+                firestore.collection(COURSES_COLLECTION)
+                    .whereIn("__name__", chunk)
+                    .get()
+                    .await()
+                    .documents
+                    .map { it.toCourse() }
+            }
             courseDao.upsertAll(courses.map { it.toEntity() })
         }
     }
@@ -92,6 +98,9 @@ class CourseRepository(
             .await()
             .documents
             .map { it.toCourse() }
+        // Limpia antes de insertar: si no, un curso que el profesor deja de dictar
+        // (documento borrado/reasignado) quedaba "fantasma" para siempre en el caché local.
+        courseDao.clearForProfessor(professorId)
         courseDao.upsertAll(courses.map { it.toEntity() })
     }
 
@@ -119,11 +128,15 @@ class CourseRepository(
             .documents
             .mapNotNull { it.getString("studentId") }
         if (studentIds.isEmpty()) return@runCatching emptyList()
-        firestore.collection("users")
-            .whereIn("__name__", studentIds.take(30))
-            .get()
-            .await()
-            .documents
-            .map { it.toUser() }
+        // Mismo límite de whereIn(30) que arriba: se consulta en bloques para no truncar
+        // silenciosamente la lista de estudiantes en cursos masivos.
+        studentIds.chunked(30).flatMap { chunk ->
+            firestore.collection("users")
+                .whereIn("__name__", chunk)
+                .get()
+                .await()
+                .documents
+                .map { it.toUser() }
+        }
     }
 }

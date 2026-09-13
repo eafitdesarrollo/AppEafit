@@ -5,6 +5,7 @@ import co.edu.eafit.appeafit.data.local.entity.CachedUserEntity
 import co.edu.eafit.appeafit.domain.model.Role
 import co.edu.eafit.appeafit.domain.model.User
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
@@ -46,6 +47,16 @@ class UserRepository(
     suspend fun createUserProfile(user: User): Result<Unit> = runCatching {
         firestore.collection(USERS_COLLECTION).document(user.uid).set(user.toMap()).await()
         userDao.upsert(user.toEntity())
+        // El token FCM puede haber llegado (EafitMessagingService.onNewToken) ANTES de que
+        // este documento existiera, en cuyo caso ese update se perdió silenciosamente.
+        // Se reintenta aquí, ya con el documento creado; si falla (p. ej. sin Play Services
+        // en el emulador) se ignora, no es crítico para completar el registro.
+        runCatching {
+            val token = FirebaseMessaging.getInstance().token.await()
+            if (token.isNotBlank()) {
+                firestore.collection(USERS_COLLECTION).document(user.uid).update("fcmToken", token).await()
+            }
+        }
     }
 
     suspend fun refreshUser(uid: String): Result<User> = runCatching {

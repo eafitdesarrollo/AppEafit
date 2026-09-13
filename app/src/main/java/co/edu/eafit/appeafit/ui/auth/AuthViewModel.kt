@@ -3,6 +3,7 @@ package co.edu.eafit.appeafit.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.edu.eafit.appeafit.core.di.AppContainer
+import co.edu.eafit.appeafit.core.util.toFriendlyAuthMessage
 import co.edu.eafit.appeafit.domain.model.Role
 import co.edu.eafit.appeafit.domain.model.User
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,11 +82,16 @@ class AuthViewModel(private val container: AppContainer) : ViewModel() {
                             createdAt = System.currentTimeMillis()
                         )
                         val profileResult = container.userRepository.createUserProfile(newUser)
-                        _uiState.update { it.copy(isLoading = false) }
                         profileResult.onSuccess {
+                            _uiState.update { it.copy(isLoading = false) }
                             onSuccess()
                         }.onFailure { throwable ->
-                            _uiState.update { it.copy(errorMessage = throwable.toFriendlyMessage()) }
+                            // Revierte la cuenta de Auth recién creada para no dejarla huérfana
+                            // (viva en Auth, sin documento de perfil en Firestore).
+                            container.authRepository.deleteCurrentAccount()
+                            _uiState.update {
+                                it.copy(isLoading = false, errorMessage = throwable.toFriendlyMessage())
+                            }
                         }
                     }.onFailure { throwable ->
                         _uiState.update { it.copy(isLoading = false, errorMessage = throwable.toFriendlyMessage()) }
@@ -117,10 +123,4 @@ class AuthViewModel(private val container: AppContainer) : ViewModel() {
     }
 }
 
-private fun Throwable.toFriendlyMessage(): String = when {
-    message?.contains("password is invalid", ignoreCase = true) == true -> "Contraseña incorrecta"
-    message?.contains("no user record", ignoreCase = true) == true -> "No existe una cuenta con ese correo"
-    message?.contains("email address is already in use", ignoreCase = true) == true -> "Ya existe una cuenta con ese correo"
-    message?.contains("network", ignoreCase = true) == true -> "Revisa tu conexión a internet"
-    else -> message ?: "Ocurrió un error inesperado"
-}
+private fun Throwable.toFriendlyMessage(): String = toFriendlyAuthMessage()

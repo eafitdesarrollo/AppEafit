@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.edu.eafit.appeafit.core.di.AppContainer
+import co.edu.eafit.appeafit.core.util.toFriendlyAuthMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -56,7 +57,11 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    fun changePassword(newPassword: String, confirmPassword: String) {
+    fun changePassword(currentPassword: String, newPassword: String, confirmPassword: String) {
+        if (currentPassword.isBlank()) {
+            _passwordState.update { it.copy(errorMessage = "Ingresa tu contraseña actual") }
+            return
+        }
         if (newPassword.length < 6) {
             _passwordState.update { it.copy(errorMessage = "La contraseña debe tener al menos 6 caracteres") }
             return
@@ -67,11 +72,11 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         }
         _passwordState.update { it.copy(isSaving = true, errorMessage = null) }
         viewModelScope.launch {
-            val result = container.authRepository.changePassword(newPassword)
+            val result = container.authRepository.changePassword(currentPassword, newPassword)
             result.onSuccess {
                 _passwordState.update { it.copy(isSaving = false, success = true) }
             }.onFailure {
-                _passwordState.update { s -> s.copy(isSaving = false, errorMessage = it.message ?: "No se pudo cambiar la contraseña") }
+                _passwordState.update { s -> s.copy(isSaving = false, errorMessage = it.toFriendlyAuthMessage()) }
             }
         }
     }

@@ -1,6 +1,7 @@
 package co.edu.eafit.appeafit.data.repository
 
 import co.edu.eafit.appeafit.domain.model.Reservation
+import co.edu.eafit.appeafit.domain.model.ReservationStatus
 import co.edu.eafit.appeafit.domain.model.Space
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -34,7 +35,29 @@ class ReservationRepository(private val firestore: FirebaseFirestore) {
             .map { it.toReservation() }
     }
 
+    /**
+     * Antes se creaba la reserva directo, sin ninguna consulta previa que revisara si ya
+     * existía otra reserva pendiente/aprobada para el mismo espacio y fecha con horario
+     * solapado — dos personas podían reservar la misma sala a la misma hora sin ningún
+     * aviso, y quien las aprobara no tenía ninguna señal visual del conflicto.
+     */
     suspend fun create(reservation: Reservation): Result<Unit> = runCatching {
+        val sameDaySameSpace = firestore.collection(RESERVATIONS_COLLECTION)
+            .whereEqualTo("spaceId", reservation.spaceId)
+            .whereEqualTo("date", reservation.date)
+            .get()
+            .await()
+            .documents
+            .map { it.toReservation() }
+
+        val overlaps = sameDaySameSpace.any { existing ->
+            existing.status != ReservationStatus.REJECTED.id &&
+                existing.status != ReservationStatus.CANCELLED.id &&
+                reservation.startTime < existing.endTime && reservation.endTime > existing.startTime
+        }
+        if (overlaps) {
+            error("Ya hay una reserva pendiente o aprobada para ese espacio en ese horario")
+        }
         firestore.collection(RESERVATIONS_COLLECTION).add(reservation.toMap()).await()
         Unit
     }

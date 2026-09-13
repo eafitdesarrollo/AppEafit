@@ -27,9 +27,21 @@ service cloud.firestore {
       return isSignedIn() && myRole() == 'professor';
     }
 
+    // El profesor dueño del curso (professorId == myUid()). Se usa para que un profesor
+    // solo pueda crear notas/asistencia de SUS propios cursos, no de cursos ajenos.
+    function ownsCourse(courseId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/courses/$(courseId)).data.professorId == myUid();
+    }
+
     // ----- Users -----
     match /users/{uid} {
-      allow read: if isSignedIn();
+      // 2026-09-13: antes "allow read: if isSignedIn()" dejaba leer TODO el directorio
+      // (email, rol, código, foto, fcmToken de cualquiera) a cualquier usuario autenticado,
+      // incluidos estudiantes. Ahora cada quien lee su propio perfil; profesor/staff/admin
+      // pueden leer otros perfiles porque lo necesitan (listar estudiantes matriculados en
+      // MyCoursesScreen/AttendanceScreen/GradeEntryScreen, directorio institucional, etc.).
+      allow read: if isSignedIn() && (myUid() == uid || isProfessor() || isStaffOrAdmin());
       allow create: if isSignedIn() && myUid() == uid;
       // Owners may edit their own profile, but never their role or active flag.
       allow update: if isSignedIn() && myUid() == uid &&
@@ -67,20 +79,31 @@ service cloud.firestore {
     match /grades/{gradeId} {
       allow read: if isSignedIn() &&
         (resource.data.studentId == myUid() || isProfessor() || isStaffOrAdmin());
-      allow create, update: if isProfessor() || isStaffOrAdmin();
+      // 2026-09-13: antes cualquier profesor autenticado podía crear/editar notas de
+      // CUALQUIER curso (solo se validaba el rol, no el dueño del curso). Ahora se exige
+      // que el curso de la nota (request.resource.data.courseId) le pertenezca.
+      allow create, update: if isStaffOrAdmin() ||
+        (isProfessor() && ownsCourse(request.resource.data.courseId));
       allow delete: if isStaffOrAdmin();
     }
 
     // ----- Attendance -----
     match /attendance/{sessionId} {
       allow read: if isProfessor() || isStaffOrAdmin();
-      allow create: if isProfessor();
+      // 2026-09-13: mismo problema que en `grades` — se exige pertenencia del curso.
+      allow create: if isStaffOrAdmin() ||
+        (isProfessor() && ownsCourse(request.resource.data.courseId));
       allow update, delete: if isStaffOrAdmin();
     }
 
-    // ----- Teacher evaluations: write-only for students, readable by staff/admin -----
+    // ----- Teacher evaluations: students can create their own and check if they already
+    // evaluated a course; only staff/admin can read the full list (with scores) -----
     match /teacherEvaluations/{evalId} {
-      allow read: if isStaffOrAdmin();
+      // 2026-09-13: antes "allow read: if isStaffOrAdmin()" impedía que el propio estudiante
+      // consultara si YA había evaluado un curso (TeacherEvaluationRepository.hasEvaluated()
+      // recibía PERMISSION_DENIED, el error se tragaba y el estudiante podía evaluar el mismo
+      // curso varias veces). Ahora puede leer sus propias evaluaciones (no las de otros).
+      allow read: if isStaffOrAdmin() || (isSignedIn() && resource.data.studentId == myUid());
       allow create: if isSignedIn() && request.resource.data.studentId == myUid();
       allow update, delete: if isAdmin();
     }
@@ -123,8 +146,22 @@ service cloud.firestore {
         (resource.data.targetUserId == myUid() ||
          resource.data.targetRole == 'all' ||
          resource.data.targetRole == myRole());
-      allow update: if isSignedIn();
-      allow create, delete: if isAdmin();
+      // 2026-09-13: antes "allow update: if isSignedIn()" dejaba que CUALQUIER usuario
+      // autenticado reescribiera title/body/targetRole/targetUserId de cualquier
+      // notificación ya enviada (se usaba solo para marcar "leído", pero la regla no lo
+      // limitaba a eso). El contenido de una notificación ya creada ahora es inmutable
+      // salvo para el admin; el estado de "leído" se maneja por usuario en la subcolección
+      // `reads` de abajo, no en el documento compartido.
+      allow create, update, delete: if isAdmin();
+
+      // Marcador de "leído" por usuario. Reemplaza el antiguo campo compartido `read` del
+      // documento (que quedaba "leído" para TODOS los destinatarios en cuanto uno solo lo
+      // abría). Cada usuario únicamente puede leer/crear su propio marcador.
+      match /reads/{uid} {
+        allow read: if isSignedIn() && myUid() == uid;
+        allow create: if isSignedIn() && myUid() == uid && request.resource.data.uid == uid;
+        allow update, delete: if false;
+      }
     }
   }
 }

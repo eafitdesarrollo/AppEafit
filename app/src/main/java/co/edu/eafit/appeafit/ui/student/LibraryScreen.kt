@@ -45,6 +45,8 @@ import java.util.Locale
 @Composable
 fun LibraryScreen(container: AppContainer, studentId: String, onBack: () -> Unit) {
     var loans by remember { mutableStateOf<List<Loan>>(emptyList()) }
+    var renewingId by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val dateFormat = remember { SimpleDateFormat("dd MMM", Locale.forLanguageTag("es-CO")) }
 
@@ -68,28 +70,45 @@ fun LibraryScreen(container: AppContainer, studentId: String, onBack: () -> Unit
             EmptyState(message = "No tienes préstamos activos en la biblioteca", icon = Icons.AutoMirrored.Filled.MenuBook, modifier = Modifier.padding(padding))
             return@Scaffold
         }
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(loans, key = { it.id }) { loan ->
-                Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(loan.itemTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text("Vence: ${dateFormat.format(Date(loan.dueAt))}", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Button(onClick = {
-                            scope.launch {
-                                container.loanRepository.renew(loan.id, loan.dueAt)
-                                reload()
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (errorMessage != null) {
+                Text(
+                    errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(loans, key = { it.id }) { loan ->
+                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(loan.itemTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                Text("Vence: ${dateFormat.format(Date(loan.dueAt))}", style = MaterialTheme.typography.bodySmall)
                             }
-                        }) {
-                            Text("Renovar")
+                            Button(
+                                onClick = {
+                                    errorMessage = null
+                                    renewingId = loan.id
+                                    scope.launch {
+                                        container.loanRepository.renew(loan.id)
+                                            .onSuccess { reload() }
+                                            .onFailure { errorMessage = it.message ?: "No se pudo renovar el préstamo" }
+                                        renewingId = null
+                                    }
+                                },
+                                enabled = loan.canRenew && renewingId != loan.id
+                            ) {
+                                Text(if (loan.canRenew) "Renovar" else "Sin renovaciones")
+                            }
                         }
                     }
                 }

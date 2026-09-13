@@ -28,6 +28,9 @@ class CalendarRepository(
             .await()
             .documents
             .map { it.toCalendarEvent() }
+        // Limpia antes de insertar: si no, un evento borrado en Firestore quedaba
+        // "fantasma" para siempre en el caché local (nunca se eliminaba).
+        calendarEventDao.clear()
         calendarEventDao.upsertAll(events.map { it.toEntity() })
     }
 }

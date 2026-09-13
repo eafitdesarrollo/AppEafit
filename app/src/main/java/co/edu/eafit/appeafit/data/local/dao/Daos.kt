@@ -42,6 +42,9 @@ interface CourseDao {
 
     @Query("DELETE FROM cached_course")
     suspend fun clear()
+
+    @Query("DELETE FROM cached_course WHERE professorId = :professorId")
+    suspend fun clearForProfessor(professorId: String)
 }
 
 @Dao

@@ -119,6 +119,17 @@ fun SpaceReservationScreen(
                                             }
                                         }
                                     }
+                                    // Antes las reglas de Firestore ya permitían que el propio
+                                    // usuario cancelara su reserva, pero ningún botón de la UI
+                                    // lo exponía (solo staff podía aprobar/rechazar).
+                                    if (!manageAll && reservation.userId == userId &&
+                                        (reservation.status == ReservationStatus.PENDING.id || reservation.status == ReservationStatus.APPROVED.id)
+                                    ) {
+                                        androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 8.dp))
+                                        OutlinedButton(onClick = { viewModel.cancelOwnReservation(reservation.id, userId) }) {
+                                            Text("Cancelar reserva")
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -135,6 +146,24 @@ fun SpaceReservationScreen(
         var start by remember { mutableStateOf("") }
         var end by remember { mutableStateOf("") }
         var purpose by remember { mutableStateOf("") }
+        val createError by viewModel.createError.collectAsStateWithLifecycle()
+        val successTick by viewModel.createSuccessTick.collectAsStateWithLifecycle()
+
+        // El diálogo ya no se cierra apenas se pulsa "Guardar": si create() falla (p. ej.
+        // por solapamiento de horario), antes el diálogo se cerraba igual y el usuario
+        // nunca veía el motivo. Ahora solo se cierra cuando la reserva se crea con éxito.
+        androidx.compose.runtime.LaunchedEffect(successTick) {
+            if (successTick > 0) showRequestDialog = false
+        }
+
+        // Antes no había ninguna validación de formato: se podía "Guardar" con texto libre
+        // en fecha/hora. Son reglas simples (no reemplazan un DatePicker/TimePicker real,
+        // pendiente como mejora futura) pero evitan reservas con datos evidentemente inválidos.
+        val dateValid = Regex("""\d{4}-\d{2}-\d{2}""").matches(date)
+        val startValid = Regex("""\d{2}:\d{2}""").matches(start)
+        val endValid = Regex("""\d{2}:\d{2}""").matches(end)
+        val rangeValid = startValid && endValid && start < end
+        val formValid = selectedSpace != null && dateValid && rangeValid && purpose.isNotBlank()
 
         AlertDialog(
             onDismissRequest = { showRequestDialog = false },
@@ -151,22 +180,39 @@ fun SpaceReservationScreen(
                             }
                         }
                     }
-                    OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Fecha (aaaa-mm-dd)") }, singleLine = true)
-                    OutlinedTextField(value = start, onValueChange = { start = it }, label = { Text("Hora inicio") }, singleLine = true)
-                    OutlinedTextField(value = end, onValueChange = { end = it }, label = { Text("Hora fin") }, singleLine = true)
+                    OutlinedTextField(
+                        value = date, onValueChange = { date = it },
+                        label = { Text("Fecha (aaaa-mm-dd)") }, singleLine = true,
+                        isError = date.isNotEmpty() && !dateValid
+                    )
+                    OutlinedTextField(
+                        value = start, onValueChange = { start = it },
+                        label = { Text("Hora inicio (HH:mm)") }, singleLine = true,
+                        isError = start.isNotEmpty() && !startValid
+                    )
+                    OutlinedTextField(
+                        value = end, onValueChange = { end = it },
+                        label = { Text("Hora fin (HH:mm)") }, singleLine = true,
+                        isError = end.isNotEmpty() && (!endValid || (startValid && !rangeValid))
+                    )
                     OutlinedTextField(value = purpose, onValueChange = { purpose = it }, label = { Text("Motivo") })
+                    if (createError != null) {
+                        Text(createError!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    selectedSpace?.let { space ->
-                        viewModel.createReservation(userId, userName, space, date, start, end, purpose)
+                TextButton(
+                    enabled = formValid,
+                    onClick = {
+                        selectedSpace?.let { space ->
+                            viewModel.createReservation(userId, userName, space, date, start, end, purpose)
+                        }
                     }
-                    showRequestDialog = false
-                }) { Text(stringResource(R.string.common_save)) }
+                ) { Text(stringResource(R.string.common_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRequestDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+                TextButton(onClick = { showRequestDialog = false; viewModel.clearCreateError() }) { Text(stringResource(R.string.common_cancel)) }
             }
         )
     }

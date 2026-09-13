@@ -29,6 +29,6 @@ class NotificationsViewModel(private val container: AppContainer, private val us
     }
 
     fun markRead(id: String) {
-        viewModelScope.launch { container.notificationRepository.markRead(id) }
+        viewModelScope.launch { container.notificationRepository.markRead(id, user.uid) }
     }
 }

@@ -1,5 +1,10 @@
 # AppEAFIT
 
+> 📓 **Antes de trabajar en este proyecto, lee [`BITACORA.md`](BITACORA.md).** Ahí está
+> la documentación completa de arquitectura, estructura, reglas de seguridad y el
+> registro histórico de cambios — y la regla obligatoria de actualizarlo cada vez que
+> alguien (persona o IA) trabaje aquí.
+
 Aplicación móvil no oficial para la comunidad de la Universidad EAFIT, inspirada en la experiencia
 de apps institucionales universitarias (carnet digital, servicios, notificaciones) y adaptada a la
 identidad visual de EAFIT (azul `#146AEF`, negro y blanco).

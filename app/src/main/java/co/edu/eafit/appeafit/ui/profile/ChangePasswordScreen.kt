@@ -42,6 +42,7 @@ fun ChangePasswordScreen(container: AppContainer, onBack: () -> Unit) {
     val viewModel: ProfileViewModel = viewModel(factory = GenericViewModelFactory { ProfileViewModel(container) })
     val state by viewModel.passwordState.collectAsStateWithLifecycle()
 
+    var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
@@ -58,6 +59,16 @@ fun ChangePasswordScreen(container: AppContainer, onBack: () -> Unit) {
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
+            OutlinedTextField(
+                value = currentPassword,
+                onValueChange = { currentPassword = it },
+                label = { Text("Contraseña actual") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth()
+            )
+            androidx.compose.foundation.layout.Spacer(Modifier.height(14.dp))
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
@@ -85,7 +96,7 @@ fun ChangePasswordScreen(container: AppContainer, onBack: () -> Unit) {
 
             androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
             Button(
-                onClick = { viewModel.changePassword(newPassword, confirmPassword) },
+                onClick = { viewModel.changePassword(currentPassword, newPassword, confirmPassword) },
                 enabled = !state.isSaving,
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)

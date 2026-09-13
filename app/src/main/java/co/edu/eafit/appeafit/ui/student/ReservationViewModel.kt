@@ -19,6 +19,12 @@ class ReservationViewModel(private val container: AppContainer, private val mana
     private val _spaces = MutableStateFlow<List<Space>>(emptyList())
     val spaces: StateFlow<List<Space>> = _spaces
 
+    private val _createError = MutableStateFlow<String?>(null)
+    val createError: StateFlow<String?> = _createError
+
+    private val _createSuccessTick = MutableStateFlow(0)
+    val createSuccessTick: StateFlow<Int> = _createSuccessTick
+
     fun load(userId: String) {
         viewModelScope.launch {
             _state.value = UiState.Loading
@@ -31,6 +37,7 @@ class ReservationViewModel(private val container: AppContainer, private val mana
 
     fun createReservation(userId: String, userName: String, space: Space, date: String, start: String, end: String, purpose: String) {
         viewModelScope.launch {
+            _createError.value = null
             container.reservationRepository.create(
                 Reservation(
                     spaceId = space.id,
@@ -44,9 +51,17 @@ class ReservationViewModel(private val container: AppContainer, private val mana
                     status = ReservationStatus.PENDING.id,
                     createdAt = System.currentTimeMillis()
                 )
-            )
-            load(userId)
+            ).onSuccess {
+                load(userId)
+                _createSuccessTick.value += 1
+            }.onFailure {
+                _createError.value = it.message ?: "No se pudo crear la reserva"
+            }
         }
+    }
+
+    fun clearCreateError() {
+        _createError.value = null
     }
 
     fun updateStatus(id: String, status: String, refreshUserId: String) {
@@ -55,4 +70,8 @@ class ReservationViewModel(private val container: AppContainer, private val mana
             load(refreshUserId)
         }
     }
+
+    /** Cancelación de la propia reserva — la regla de Firestore ya la permite explícitamente
+     * (status pasa a 'cancelled'), pero antes ningún botón de la UI la exponía. */
+    fun cancelOwnReservation(id: String, userId: String) = updateStatus(id, ReservationStatus.CANCELLED.id, userId)
 }

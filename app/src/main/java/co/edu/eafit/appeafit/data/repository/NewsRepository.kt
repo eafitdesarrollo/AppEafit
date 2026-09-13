@@ -27,6 +27,9 @@ class NewsRepository(
             .get()
             .await()
         val items = docs.documents.map { it.toNewsItem() }
+        // Limpia antes de insertar: si no, una noticia borrada en Firestore quedaba
+        // "fantasma" para siempre en el caché local (nunca se eliminaba).
+        newsDao.clear()
         newsDao.upsertAll(items.map { it.toEntity() })
     }
 
