@@ -5,18 +5,23 @@
 > registro histórico de cambios — y la regla obligatoria de actualizarlo cada vez que
 > alguien (persona o IA) trabaje aquí.
 
-Aplicación móvil no oficial para la comunidad de la Universidad EAFIT, inspirada en la experiencia
-de apps institucionales universitarias (carnet digital, servicios, notificaciones) y adaptada a la
-identidad visual de EAFIT (azul `#146AEF`, negro y blanco).
+Aplicación móvil no oficial para la comunidad de la Universidad EAFIT — **100% virtual, sin
+componente presencial** — inspirada en la experiencia de apps institucionales universitarias
+(carnet digital, servicios, notificaciones) y adaptada a la identidad visual de EAFIT (azul
+`#146AEF`, negro y blanco).
 
 La app tiene **cuatro roles**, cada uno con su propio panel de servicios:
 
 | Rol | Qué puede hacer |
 |---|---|
-| **Estudiante** | Notas, horario, calculadora de promedio, calendario académico, evaluación docente, biblioteca (préstamos), objetos perdidos, reserva de espacios, carnet digital con QR |
-| **Profesor** | Mis cursos, tomar asistencia, cargar notas, publicar anuncios de curso |
-| **Administrativo** | Directorio institucional, gestionar anuncios, gestionar reservas de espacios, gestionar objetos perdidos |
+| **Estudiante** | Notas, horario (clases virtuales), calculadora de promedio, calendario académico interactivo, evaluación docente, biblioteca (préstamos), carnet digital con QR |
+| **Profesor** | Mis cursos, tomar asistencia (sesiones virtuales en vivo), cargar notas, publicar anuncios de curso |
+| **Administrativo** | Directorio institucional, gestionar anuncios |
 | **Administrador de la app** | Gestión de usuarios y roles, gestión de contenido, notificaciones push masivas, estadísticas |
+
+> Como la universidad no tiene campus físico, la app deliberadamente **no** incluye funciones que
+> asuman presencialidad (objetos perdidos, reserva de salas/salones, ubicación de aulas). Si vas a
+> agregar una función nueva, ten esto en cuenta antes de diseñarla.
 
 ## Stack técnico
 

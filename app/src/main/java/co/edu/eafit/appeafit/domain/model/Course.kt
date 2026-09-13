@@ -3,8 +3,7 @@ package co.edu.eafit.appeafit.domain.model
 data class ScheduleSlot(
     val day: String = "",
     val startTime: String = "",
-    val endTime: String = "",
-    val room: String = ""
+    val endTime: String = ""
 )
 
 data class Course(

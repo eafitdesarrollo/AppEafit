@@ -1,5 +1,9 @@
 package co.edu.eafit.appeafit.ui.student
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,19 +14,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -42,6 +43,8 @@ import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.core.di.GenericViewModelFactory
 import co.edu.eafit.appeafit.domain.model.Course
+import co.edu.eafit.appeafit.ui.components.EafitButton
+import co.edu.eafit.appeafit.ui.components.EafitCard
 import co.edu.eafit.appeafit.ui.components.EmptyState
 import kotlinx.coroutines.launch
 
@@ -77,17 +80,23 @@ fun TeacherEvaluationScreen(container: AppContainer, studentId: String, onBack: 
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(courses, key = { it.id }) { course ->
-                EvaluationCard(
-                    course = course,
-                    submitted = evaluatedCourseIds.contains(course.id),
-                    onSubmit = { rating, comment ->
-                        scope.launch {
-                            container.teacherEvaluationRepository.submit(course.id, studentId, rating, comment)
-                            evaluatedCourseIds = evaluatedCourseIds + course.id
+            itemsIndexed(courses, key = { _, item -> item.id }) { index, course ->
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(tween(250, delayMillis = index * 40)) +
+                        slideInVertically(tween(250, delayMillis = index * 40)) { it / 5 }
+                ) {
+                    EvaluationCard(
+                        course = course,
+                        submitted = evaluatedCourseIds.contains(course.id),
+                        onSubmit = { rating, comment ->
+                            scope.launch {
+                                container.teacherEvaluationRepository.submit(course.id, studentId, rating, comment)
+                                evaluatedCourseIds = evaluatedCourseIds + course.id
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -98,10 +107,22 @@ private fun EvaluationCard(course: Course, submitted: Boolean, onSubmit: (Int, S
     var rating by remember { mutableIntStateOf(0) }
     var comment by remember { mutableStateOf("") }
 
-    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
+    EafitCard {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(course.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text(course.professorName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                course.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            Text(
+                course.professorName,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
 
             if (submitted) {
                 Text(
@@ -130,13 +151,12 @@ private fun EvaluationCard(course: Course, submitted: Boolean, onSubmit: (Int, S
                     label = { Text("Comentario (opcional)") },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                 )
-                Button(
+                EafitButton(
+                    text = "Enviar evaluación",
                     onClick = { onSubmit(rating, comment) },
                     enabled = rating > 0,
                     modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    Text("Enviar evaluación")
-                }
+                )
             }
         }
     }

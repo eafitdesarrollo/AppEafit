@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.domain.model.NewsItem
+import co.edu.eafit.appeafit.ui.components.EafitButton
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,7 +52,8 @@ fun AnnouncementsScreen(container: AppContainer, authorId: String, onBack: () ->
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
             OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text("Mensaje") }, modifier = Modifier.fillMaxWidth())
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 20.dp))
-            Button(
+            EafitButton(
+                text = if (published) "Publicado ✓" else "Publicar anuncio",
                 onClick = {
                     scope.launch {
                         container.newsRepository.publish(
@@ -70,9 +71,7 @@ fun AnnouncementsScreen(container: AppContainer, authorId: String, onBack: () ->
                 },
                 enabled = title.isNotBlank() && body.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (published) "Publicado ✓" else "Publicar anuncio")
-            }
+            )
         }
     }
 }

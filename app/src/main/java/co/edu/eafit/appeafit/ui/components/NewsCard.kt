@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import co.edu.eafit.appeafit.domain.model.NewsItem
@@ -25,7 +26,7 @@ import co.edu.eafit.appeafit.domain.model.NewsItem
 fun NewsCard(item: NewsItem, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.size(width = 220.dp, height = 260.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -58,6 +59,8 @@ fun NewsCard(item: NewsItem, modifier: Modifier = Modifier) {
                         text = item.category,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -68,6 +71,7 @@ fun NewsCard(item: NewsItem, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(14.dp)

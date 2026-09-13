@@ -7,12 +7,9 @@ import co.edu.eafit.appeafit.domain.model.CalendarEvent
 import co.edu.eafit.appeafit.domain.model.Course
 import co.edu.eafit.appeafit.domain.model.Grade
 import co.edu.eafit.appeafit.domain.model.Loan
-import co.edu.eafit.appeafit.domain.model.LostItem
 import co.edu.eafit.appeafit.domain.model.NewsItem
-import co.edu.eafit.appeafit.domain.model.Reservation
 import co.edu.eafit.appeafit.domain.model.Role
 import co.edu.eafit.appeafit.domain.model.ScheduleSlot
-import co.edu.eafit.appeafit.domain.model.Space
 import co.edu.eafit.appeafit.domain.model.User
 import com.google.firebase.firestore.DocumentSnapshot
 
@@ -65,8 +62,7 @@ fun DocumentSnapshot.toCourse(): Course {
         ScheduleSlot(
             day = it["day"] as? String ?: "",
             startTime = it["startTime"] as? String ?: "",
-            endTime = it["endTime"] as? String ?: "",
-            room = it["room"] as? String ?: ""
+            endTime = it["endTime"] as? String ?: ""
         )
     }
     return Course(
@@ -87,7 +83,7 @@ fun Course.toMap(): Map<String, Any?> = mapOf(
     "professorName" to professorName,
     "credits" to credits,
     "schedule" to schedule.map {
-        mapOf("day" to it.day, "startTime" to it.startTime, "endTime" to it.endTime, "room" to it.room)
+        mapOf("day" to it.day, "startTime" to it.startTime, "endTime" to it.endTime)
     }
 )
 
@@ -114,27 +110,6 @@ fun Grade.toMap(): Map<String, Any?> = mapOf(
     "date" to date
 )
 
-fun DocumentSnapshot.toLostItem(): LostItem = LostItem(
-    id = id,
-    title = getString("title").orEmpty(),
-    description = getString("description").orEmpty(),
-    location = getString("location").orEmpty(),
-    imageUrl = getString("imageUrl").orEmpty(),
-    reportedBy = getString("reportedBy").orEmpty(),
-    status = getString("status").orEmpty().ifEmpty { "reported" },
-    createdAt = getLong("createdAt") ?: 0L
-)
-
-fun LostItem.toMap(): Map<String, Any?> = mapOf(
-    "title" to title,
-    "description" to description,
-    "location" to location,
-    "imageUrl" to imageUrl,
-    "reportedBy" to reportedBy,
-    "status" to status,
-    "createdAt" to createdAt
-)
-
 fun DocumentSnapshot.toLoan(): Loan = Loan(
     id = id,
     studentId = getString("studentId").orEmpty(),
@@ -143,41 +118,6 @@ fun DocumentSnapshot.toLoan(): Loan = Loan(
     dueAt = getLong("dueAt") ?: 0L,
     returned = getBoolean("returned") ?: false,
     renewalCount = getLong("renewalCount")?.toInt() ?: 0
-)
-
-fun DocumentSnapshot.toSpace(): Space = Space(
-    id = id,
-    name = getString("name").orEmpty(),
-    location = getString("location").orEmpty(),
-    capacity = (getLong("capacity") ?: 0L).toInt(),
-    type = getString("type").orEmpty()
-)
-
-fun DocumentSnapshot.toReservation(): Reservation = Reservation(
-    id = id,
-    spaceId = getString("spaceId").orEmpty(),
-    spaceName = getString("spaceName").orEmpty(),
-    userId = getString("userId").orEmpty(),
-    userName = getString("userName").orEmpty(),
-    date = getString("date").orEmpty(),
-    startTime = getString("startTime").orEmpty(),
-    endTime = getString("endTime").orEmpty(),
-    purpose = getString("purpose").orEmpty(),
-    status = getString("status").orEmpty().ifEmpty { "pending" },
-    createdAt = getLong("createdAt") ?: 0L
-)
-
-fun Reservation.toMap(): Map<String, Any?> = mapOf(
-    "spaceId" to spaceId,
-    "spaceName" to spaceName,
-    "userId" to userId,
-    "userName" to userName,
-    "date" to date,
-    "startTime" to startTime,
-    "endTime" to endTime,
-    "purpose" to purpose,
-    "status" to status,
-    "createdAt" to createdAt
 )
 
 fun DocumentSnapshot.toAppNotification(): AppNotification = AppNotification(

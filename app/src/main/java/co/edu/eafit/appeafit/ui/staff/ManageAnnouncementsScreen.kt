@@ -1,5 +1,9 @@
 package co.edu.eafit.appeafit.ui.staff
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,8 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -41,7 +43,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.core.di.AppContainer
+import androidx.compose.ui.text.style.TextOverflow
 import co.edu.eafit.appeafit.domain.model.NewsItem
+import co.edu.eafit.appeafit.ui.components.EafitCard
 import co.edu.eafit.appeafit.ui.components.EmptyState
 import kotlinx.coroutines.launch
 
@@ -84,24 +88,42 @@ fun ManageAnnouncementsScreen(container: AppContainer, authorId: String, onBack:
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(news, key = { it.id }) { item ->
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(item.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                                Text(item.category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            IconButton(onClick = {
-                                scope.launch {
-                                    container.newsRepository.delete(item.id)
-                                    reload()
+                itemsIndexed(news, key = { _, item -> item.id }) { index, item ->
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(tween(250, delayMillis = (index % 12) * 30)) +
+                            slideInVertically(tween(250, delayMillis = (index % 12) * 30)) { it / 5 }
+                    ) {
+                        EafitCard(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                    Text(
+                                        item.title,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        item.category,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
-                            }) {
-                                Icon(Icons.Filled.Delete, contentDescription = null)
+                                IconButton(onClick = {
+                                    scope.launch {
+                                        container.newsRepository.delete(item.id)
+                                        reload()
+                                    }
+                                }) {
+                                    Icon(Icons.Filled.Delete, contentDescription = null)
+                                }
                             }
                         }
                     }

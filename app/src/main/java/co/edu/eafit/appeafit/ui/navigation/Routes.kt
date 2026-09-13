@@ -15,8 +15,6 @@ object Routes {
     const val STUDENT_GRADES = "student/grades"
     const val STUDENT_SCHEDULE = "student/schedule"
     const val STUDENT_GPA_CALCULATOR = "student/gpa_calculator"
-    const val STUDENT_LOST_ITEMS = "student/lost_items"
-    const val STUDENT_SPACE_RESERVATION = "student/space_reservation"
     const val STUDENT_ACADEMIC_CALENDAR = "student/academic_calendar"
     const val STUDENT_TEACHER_EVALUATION = "student/teacher_evaluation"
     const val STUDENT_LIBRARY = "student/library"
@@ -28,8 +26,6 @@ object Routes {
 
     const val STAFF_DIRECTORY = "staff/directory"
     const val STAFF_MANAGE_ANNOUNCEMENTS = "staff/manage_announcements"
-    const val STAFF_MANAGE_RESERVATIONS = "staff/manage_reservations"
-    const val STAFF_MANAGE_LOST_ITEMS = "staff/manage_lost_items"
 
     const val ADMIN_MANAGE_USERS = "admin/manage_users"
     const val ADMIN_MANAGE_CONTENT = "admin/manage_content"

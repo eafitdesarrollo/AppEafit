@@ -108,29 +108,6 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // ----- Lost & found -----
-    match /lostItems/{itemId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.reportedBy == myUid();
-      allow update: if isStaffOrAdmin() || (isSignedIn() && resource.data.reportedBy == myUid());
-      allow delete: if isStaffOrAdmin();
-    }
-
-    // ----- Spaces & reservations -----
-    match /spaces/{spaceId} {
-      allow read: if isSignedIn();
-      allow write: if isStaffOrAdmin();
-    }
-
-    match /reservations/{reservationId} {
-      allow read: if isSignedIn() &&
-        (resource.data.userId == myUid() || isStaffOrAdmin());
-      allow create: if isSignedIn() && request.resource.data.userId == myUid();
-      allow update: if isStaffOrAdmin() ||
-        (isSignedIn() && resource.data.userId == myUid() && request.resource.data.status == 'cancelled');
-      allow delete: if isStaffOrAdmin();
-    }
-
     // ----- Library loans -----
     match /loans/{loanId} {
       allow read: if isSignedIn() &&

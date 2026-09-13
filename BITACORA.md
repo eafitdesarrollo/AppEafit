@@ -55,10 +55,14 @@ La app tiene **cuatro roles**, cada uno con su propio panel de servicios:
 
 | Rol | Qué puede hacer |
 |---|---|
-| **Estudiante** | Notas, horario, calculadora de promedio, calendario académico, evaluación docente, biblioteca (préstamos), objetos perdidos, reserva de espacios, carnet digital con QR |
-| **Profesor** | Mis cursos, tomar asistencia, cargar notas, publicar anuncios de curso |
-| **Administrativo (staff)** | Directorio institucional, gestionar anuncios, gestionar reservas de espacios, gestionar objetos perdidos |
+| **Estudiante** | Notas, horario (clases virtuales), calculadora de promedio, calendario académico interactivo, evaluación docente, biblioteca (préstamos), carnet digital con QR |
+| **Profesor** | Mis cursos, tomar asistencia (sesiones virtuales), cargar notas, publicar anuncios de curso |
+| **Administrativo (staff)** | Directorio institucional, gestionar anuncios |
 | **Administrador (admin)** | Gestión de usuarios y roles, gestión de contenido, notificaciones push masivas, estadísticas |
+
+> Desde el 2026-09-13, la app **no** tiene "objetos perdidos" ni "reserva de espacios" —
+> se eliminaron por completo (código + Firestore) porque EAFIT aquí es 100% virtual, sin
+> campus físico. Ver la entrada del 2026-09-13 (punto 18) en la sección 8.
 
 El primer usuario que se registra queda como `student`. Para promover a alguien a
 `professor`, `staff` o `admin`, un administrador debe hacerlo desde
@@ -121,14 +125,13 @@ data/
   repository/NewsRepository.kt            Anuncios/noticias institucionales y de curso — caché Room + Firestore
   repository/NotificationRepository.kt    Notificaciones (personales, por rol, broadcast) + marcador de "leído" POR USUARIO (subcolección reads/)
   repository/TeacherEvaluationRepository.kt Evaluación docente (creación + verificación de "ya evaluado")
-  repository/LostItemRepository.kt        Objetos perdidos
-  repository/ReservationRepository.kt     Espacios y reservas (con validación de solapamiento de horario)
   repository/LoanRepository.kt            Préstamos de biblioteca (renovación con límite y transacción atómica)
   repository/SettingsRepository.kt        Preferencias locales (DataStore) — ej. notificaciones push activadas/desactivadas
 
 domain/model/                            Data classes puras (sin dependencias de Firebase/Room): AppNotification, Attendance,
-                                          CalendarEvent, Course/Enrollment/ScheduleSlot, Grade, Loan, LostItem, NewsItem,
-                                          Reservation/Space, Role, User
+                                          CalendarEvent, Course/Enrollment/ScheduleSlot (sin campo "room" desde 2026-09-13),
+                                          Grade, Loan, NewsItem, Role, User
+                                          (LostItem y Reservation/Space se eliminaron el 2026-09-13, ver sección 8)
 
 ui/
   theme/                Color.kt, Theme.kt, Type.kt — paleta EAFIT (azul #146AEF, navy, cyan, negro, blanco), M3, claro/oscuro
@@ -147,10 +150,10 @@ ui/
   profile/               ProfileScreen, EditProfileScreen, ChangePasswordScreen (pide contraseña actual, reautentica),
                          SettingsScreen (toggle de notificaciones push), ProfileViewModel
   components/             CommonComponents.kt (LoadingState/ErrorState/EmptyState/RoleBadge, etc.), EafitBottomBar.kt, NewsCard.kt
-  student/                AcademicCalendarScreen, GpaCalculatorScreen, GradesScreen + GradesViewModel (promedio ponderado por
-                         créditos), LibraryScreen (renovación de préstamos con límite), LostItemsScreen + LostItemsViewModel,
-                         ReservationViewModel + SpaceReservationScreen (con cancelación propia y validación de solapamiento),
-                         ScheduleScreen + ScheduleViewModel, TeacherEvaluationScreen
+  student/                AcademicCalendarScreen (calendario mensual interactivo real, ver sección 8), GpaCalculatorScreen,
+                         GradesScreen + GradesViewModel (promedio ponderado por créditos), LibraryScreen (renovación de
+                         préstamos con límite), ScheduleScreen + ScheduleViewModel (horario "Virtual", sin salón),
+                         TeacherEvaluationScreen
   professor/              MyCoursesScreen, AttendanceScreen, GradeEntryScreen, AnnouncementsScreen
   staff/                  DirectoryScreen, ManageAnnouncementsScreen (refresca al abrir)
   admin/                  ManageUsersScreen (con guardia de "último admin"), BroadcastScreen, StatsScreen
@@ -180,9 +183,6 @@ de versiones), `settings.gradle.kts`, `gradle.properties`, `app/proguard-rules.p
 | `grades/{id}` | auto | studentId, courseId, courseName, item, score, maxScore, weightPercent, date | el profesor DUEÑO del curso (desde 2026-09-13; antes cualquier profesor), staff/admin |
 | `attendance/{id}` | auto | courseId, date, records[] (studentId, studentName, present) | el profesor DUEÑO del curso (desde 2026-09-13), staff/admin |
 | `teacherEvaluations/{id}` | auto | studentId, courseId, ratings... | el propio estudiante (create); solo lectura propia + staff/admin (desde 2026-09-13) |
-| `lostItems/{id}` | auto | title, description, location, imageUrl, reportedBy, status, createdAt | quien reporta (create), reportante o staff/admin (update) |
-| `spaces/{id}` | auto | name, location, capacity, type | staff/admin |
-| `reservations/{id}` | auto | spaceId, spaceName, userId, userName, date, startTime, endTime, purpose, status, createdAt | el propio usuario (create/cancelar), staff/admin (aprobar/rechazar) |
 | `loans/{id}` | auto | studentId, itemTitle, loanedAt, dueAt, returned, renewalCount | staff/admin (create/delete), estudiante dueño o staff/admin (update, incl. renovación) |
 | `notifications/{id}` | auto | title, body, targetRole, targetUserId, createdAt | solo admin (desde 2026-09-13; antes cualquier usuario podía editar el contenido) |
 | `notifications/{id}/reads/{uid}` | uid del usuario | uid, readAt | cada usuario, solo su propio marcador (NUEVO 2026-09-13 — reemplaza el campo `read` compartido) |
@@ -190,6 +190,9 @@ de versiones), `settings.gradle.kts`, `gradle.properties`, `app/proguard-rules.p
 Las reglas completas están en `firestore.rules` (ver sección 4 para el detalle de qué
 cambió y por qué). Los índices compuestos y de collection-group están en
 `firestore.indexes.json`.
+
+> Las colecciones `lostItems`, `spaces` y `reservations` existieron hasta el 2026-09-13
+> y se eliminaron por completo (código + reglas) ese día — ver sección 8, punto 18.
 
 ### 3.2 Caché local (Room) — `data/local/`
 
@@ -610,3 +613,99 @@ Quedaron pendientes de desplegar (no de código, ver sección 6 para el detalle)
 `storage.rules` (Firebase ya no tiene plan gratuito para Storage; decisión de Santiago
 Guerrero Parrado del 2026-09-13: esperar a que el cliente EAFIT pague la cuenta de
 Firebase antes de continuar con esto).
+
+**18. Rediseño completo de la interfaz (tema visual, animaciones, responsive) y ajuste
+del catálogo de funciones a una universidad 100% virtual.** Pedido explícito de Santiago
+Guerrero Parrado: la app se veía "monocromática, plana, con palabras cortadas en
+diferentes dispositivos"; además había funciones que asumen presencialidad (no aplica,
+EAFIT aquí es 100% virtual, sin campus físico).
+
+- **Funciones eliminadas por completo** (código, rutas, catálogo de servicios, reglas de
+  Firestore, mappers, `AppContainer`, strings — no solo la UI): **Objetos perdidos**
+  (`LostItem`, `LostItemRepository`, `LostItemsScreen/ViewModel`, colección
+  `lostItems`) y **Reserva de espacios** (`Reservation`/`Space`, `ReservationRepository`,
+  `SpaceReservationScreen/ViewModel`, colecciones `spaces`/`reservations`). Decisión
+  explícita del usuario: no tiene sentido reservar salas físicas ni reportar objetos
+  perdidos en un campus que no existe.
+- **`Course.ScheduleSlot` perdió el campo `room`** (salón físico) — un horario ahora solo
+  tiene día/hora; las pantallas de horario (`ScheduleScreen`, `MyCoursesScreen`) muestran
+  un indicador "Virtual" en su lugar. "Tomar asistencia" (profesor) SÍ se mantuvo —
+  decisión explícita: sigue teniendo sentido para sesiones virtuales sincrónicas en vivo,
+  solo se le quitó cualquier referencia a salón físico (nunca tuvo, se verificó).
+- **Sistema de diseño reconstruido**: `ui/theme/Color.kt` (paleta ampliada — acento cálido
+  `EafitCoral`/`EafitAmber` para romper el monocromatismo azul, superficies tonales
+  light/dark completas, `GradientHero` reutilizable), `ui/theme/Theme.kt` (esquema de
+  color M3 completo + `EafitShapes` consistente), `ui/theme/Type.kt` (tipografía con más
+  peso/letter-spacing), `ui/theme/Motion.kt` (nuevo — `Modifier.pressScale`, constantes de
+  duración `EafitMotion`). `ui/components/CommonComponents.kt` ampliado con `EafitCard`,
+  `EafitButton`, `EafitOutlinedButton`, `GradientHeroBox`, y `EmptyState`/`ErrorState`/
+  `OfflineBanner` ahora animados (antes aparecían de golpe).
+- **Calendario académico reconstruido desde cero** (`AcademicCalendarScreen.kt`): antes
+  era solo una lista plana de eventos; ahora es un calendario mensual interactivo real
+  (grilla con navegación entre meses, día seleccionable, indicador de qué días tienen
+  eventos) con la lista de eventos del día elegido debajo, con transiciones animadas.
+- **Transiciones de navegación**: `EafitNavHost.kt` y `MainScreen.kt` ahora animan el
+  cambio entre pantallas y entre pestañas del bottom bar (antes cambiaban de golpe, sin
+  transición).
+- **Fix sistemático de "texto cortado en distintos dispositivos"**: se revisó cada `Row`
+  con un `Text` junto a un ícono/switch/badge fijo (nombres de usuario, cursos, noticias,
+  anuncios, etc.) en las ~40 pantallas de la app, agregando `Modifier.weight(1f)` +
+  `maxLines` + `overflow = TextOverflow.Ellipsis` donde faltaba — antes un nombre largo
+  podía desbordar el ancho de la pantalla en vez de recortarse con puntos suspensivos.
+- **Cómo se hizo**: dado el tamaño (todo de una sola vez, por decisión explícita del
+  usuario), se repartió el trabajo en 4 agentes en paralelo, cada uno con un grupo fijo
+  de pantallas y las mismas instrucciones de estilo, después de que el sistema de diseño
+  base y el calendario quedaran terminados de forma centralizada (para evitar
+  inconsistencias entre agentes). Dos de los cuatro agentes fallaron a mitad de camino
+  por un límite de uso de la cuenta (rate limit); los archivos que dejaron a medio hacer
+  (`ManageUsersScreen.kt`, `BroadcastScreen.kt`, `StatsScreen.kt`, `LibraryScreen.kt`,
+  `ScheduleScreen.kt`, `TeacherEvaluationScreen.kt`) se terminaron directamente después de
+  verificar exactamente qué archivos habían quedado sin tocar.
+- **Validación**: `./gradlew compileDebugKotlin` y `./gradlew assembleDebug` (APK debug
+  completo) exitosos después del rediseño completo. No se probó en un emulador/dispositivo
+  real — eso queda pendiente para quien continúe (ver sección 6).
+- **Pendiente de decisión futura** (no se tocó, fuera de alcance de este pedido): revisar
+  si "Biblioteca" (préstamos) sigue teniendo sentido tal cual está planteada (¿libros
+  físicos por correo, o licencias de e-books?) dado que la universidad es 100% virtual —
+  no se eliminó ni se cambió porque no fue parte de lo pedido, pero vale la pena
+  revisarlo con el mismo criterio que se aplicó a objetos perdidos/reserva de espacios.
+
+**19. Se instaló y corrió la app en un dispositivo físico real por primera vez**
+(conectado por USB con depuración habilitada — un Oppo/OnePlus modelo CPH2579), vía
+`adb`/`./gradlew installDebug`. Se verificó por `logcat` que arranca sin crashes. Esta
+fue la primera vez que se prueba la app fuera de una compilación — todo lo validado
+antes (secciones previas) era solo a nivel de compilación, no de comportamiento real en
+pantalla.
+
+**20. Se recrearon las 4 cuentas de prueba (demo) con una contraseña conocida para
+todos los roles.** A petición de Santiago Guerrero Parrado: se **borraron por completo**
+(Firebase Auth + el documento correspondiente en Firestore `users/{uid}`) las 4 cuentas
+demo que existían, y se crearon 4 cuentas nuevas con los mismos correos y los mismos
+datos de perfil (nombre, programa, código institucional), pero con una contraseña nueva
+e igual para las 4. Se hizo con un script de Node usando el SDK de administración de
+Firebase (`firebase-admin`) y una clave de cuenta de servicio generada solo para esto y
+borrada inmediatamente después de usarla (mismo patrón de higiene que en el punto 17).
+
+**Credenciales de prueba (a partir del 2026-09-13) — usar para probar los 4 roles:**
+
+| Rol | Correo institucional | Contraseña |
+|---|---|---|
+| Estudiante | `estudiante.demo@eafit.edu.co` | `310322snGQ@` |
+| Profesor | `profesor.demo@eafit.edu.co` | `310322snGQ@` |
+| Administrativo (staff) | `administrativo.demo@eafit.edu.co` | `310322snGQ@` |
+| Administrador (admin) | `admin.demo@eafit.edu.co` | `310322snGQ@` |
+
+> ⚠️ **Advertencia de seguridad, léela antes de asumir que esto es seguro dejarlo así**:
+> el repositorio `eafitdesarrollo/AppEafit` en GitHub es **público**. Esta contraseña
+> queda visible para cualquiera en internet en cuanto este archivo se suba (y para
+> siempre en el historial de git, aunque después se borre de aquí). Es aceptable
+> ÚNICAMENTE porque son 4 cuentas de prueba ficticias sin datos reales de estudiantes.
+> Antes de que este proyecto maneje datos reales o el repo deje de ser un prototipo:
+> 1. Cambiar esta contraseña (o borrar y recrear estas cuentas de nuevo) por una que no
+>    esté en ningún historial de git público.
+> 2. Considerar hacer privado el repositorio, o mover cualquier credencial futura a un
+>    mecanismo que no sea un archivo versionado (gestor de secretos, variable de entorno
+>    fuera del repo, etc.).
+> Quien lea esto en el futuro: si esta contraseña ya no funciona, es porque alguien la
+> rotó después de esta fecha — pregunta a Santiago Guerrero Parrado o revisa si hay una
+> entrada posterior en este mismo registro que la reemplace.

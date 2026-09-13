@@ -1,5 +1,10 @@
 package co.edu.eafit.appeafit.ui.navigation
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -35,15 +40,21 @@ fun MainScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             if (!isOnline) OfflineBanner()
-            when (selectedTab) {
-                MainTab.HOME -> HomeScreen(container = container, user = user, navController = navController)
-                MainTab.SERVICES -> ServicesScreen(user = user, navController = navController)
-                MainTab.CARNET -> CarnetScreen(user = user)
-                MainTab.PROFILE -> ProfileScreen(
-                    user = user,
-                    navController = navController,
-                    onSignOut = onSignOut
-                )
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(140)) },
+                label = "mainTab"
+            ) { tab ->
+                when (tab) {
+                    MainTab.HOME -> HomeScreen(container = container, user = user, navController = navController)
+                    MainTab.SERVICES -> ServicesScreen(user = user, navController = navController)
+                    MainTab.CARNET -> CarnetScreen(user = user)
+                    MainTab.PROFILE -> ProfileScreen(
+                        user = user,
+                        navController = navController,
+                        onSignOut = onSignOut
+                    )
+                }
             }
         }
     }

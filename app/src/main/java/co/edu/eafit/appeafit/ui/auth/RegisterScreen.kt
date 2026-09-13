@@ -1,17 +1,17 @@
 package co.edu.eafit.appeafit.ui.auth
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,12 +28,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.edu.eafit.appeafit.R
+import co.edu.eafit.appeafit.ui.components.EafitButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +54,13 @@ fun RegisterScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(androidx.compose.ui.res.stringResource(R.string.auth_register_title)) },
+                title = {
+                    Text(
+                        stringResource(R.string.auth_register_title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -61,79 +69,87 @@ fun RegisterScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp)
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 8 }
         ) {
-            OutlinedTextField(
-                value = fullName, onValueChange = { fullName = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_full_name_label)) },
-                singleLine = true, shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = email, onValueChange = { email = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_email_label)) },
-                placeholder = { Text(androidx.compose.ui.res.stringResource(R.string.auth_email_placeholder)) },
-                singleLine = true, shape = RoundedCornerShape(14.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = studentId, onValueChange = { studentId = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_student_id_label)) },
-                singleLine = true, shape = RoundedCornerShape(14.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = program, onValueChange = { program = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_program_label)) },
-                singleLine = true, shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = password, onValueChange = { password = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_password_label)) },
-                singleLine = true, shape = RoundedCornerShape(14.dp),
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = confirmPassword, onValueChange = { confirmPassword = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_confirm_password_label)) },
-                singleLine = true, shape = RoundedCornerShape(14.dp),
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (uiState.errorMessage != null) {
-                androidx.compose.foundation.layout.Spacer(Modifier.height(10.dp))
-                Text(uiState.errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
-
-            androidx.compose.foundation.layout.Spacer(Modifier.height(20.dp))
-            Button(
-                onClick = { onRegister(fullName, email, studentId, program, password, confirmPassword) },
-                enabled = !uiState.isLoading,
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp)
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
-                } else {
-                    Text(androidx.compose.ui.res.stringResource(R.string.auth_register_button))
+                OutlinedTextField(
+                    value = fullName, onValueChange = { fullName = it },
+                    label = { Text(stringResource(R.string.auth_full_name_label)) },
+                    singleLine = true, shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = email, onValueChange = { email = it },
+                    label = { Text(stringResource(R.string.auth_email_label)) },
+                    placeholder = { Text(stringResource(R.string.auth_email_placeholder), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    singleLine = true, shape = MaterialTheme.shapes.small,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = studentId, onValueChange = { studentId = it },
+                    label = { Text(stringResource(R.string.auth_student_id_label)) },
+                    singleLine = true, shape = MaterialTheme.shapes.small,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = program, onValueChange = { program = it },
+                    label = { Text(stringResource(R.string.auth_program_label)) },
+                    singleLine = true, shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = password, onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.auth_password_label)) },
+                    singleLine = true, shape = MaterialTheme.shapes.small,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = confirmPassword, onValueChange = { confirmPassword = it },
+                    label = { Text(stringResource(R.string.auth_confirm_password_label)) },
+                    singleLine = true, shape = MaterialTheme.shapes.small,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                AnimatedVisibility(visible = uiState.errorMessage != null) {
+                    Column {
+                        androidx.compose.foundation.layout.Spacer(Modifier.height(10.dp))
+                        Text(
+                            uiState.errorMessage.orEmpty(),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
+
+                androidx.compose.foundation.layout.Spacer(Modifier.height(20.dp))
+                EafitButton(
+                    text = stringResource(R.string.auth_register_button),
+                    onClick = { onRegister(fullName, email, studentId, program, password, confirmPassword) },
+                    enabled = !uiState.isLoading,
+                    isLoading = uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

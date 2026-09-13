@@ -9,9 +9,7 @@ import co.edu.eafit.appeafit.ui.student.AcademicCalendarScreen
 import co.edu.eafit.appeafit.ui.student.GpaCalculatorScreen
 import co.edu.eafit.appeafit.ui.student.GradesScreen
 import co.edu.eafit.appeafit.ui.student.LibraryScreen
-import co.edu.eafit.appeafit.ui.student.LostItemsScreen
 import co.edu.eafit.appeafit.ui.student.ScheduleScreen
-import co.edu.eafit.appeafit.ui.student.SpaceReservationScreen
 import co.edu.eafit.appeafit.ui.student.TeacherEvaluationScreen
 
 fun NavGraphBuilder.studentGraph(
@@ -29,14 +27,6 @@ fun NavGraphBuilder.studentGraph(
     }
     composable(Routes.STUDENT_GPA_CALCULATOR) {
         GpaCalculatorScreen { navController.popBackStack() }
-    }
-    composable(Routes.STUDENT_LOST_ITEMS) {
-        val user = currentUser() ?: return@composable
-        LostItemsScreen(container, user.uid, canManage = false) { navController.popBackStack() }
-    }
-    composable(Routes.STUDENT_SPACE_RESERVATION) {
-        val user = currentUser() ?: return@composable
-        SpaceReservationScreen(container, user.uid, user.fullName, manageAll = false) { navController.popBackStack() }
     }
     composable(Routes.STUDENT_ACADEMIC_CALENDAR) {
         AcademicCalendarScreen(container) { navController.popBackStack() }

@@ -1,8 +1,10 @@
 package co.edu.eafit.appeafit.ui.auth
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,9 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -33,14 +32,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.edu.eafit.appeafit.R
-import co.edu.eafit.appeafit.ui.theme.EafitNavy
+import co.edu.eafit.appeafit.ui.components.EafitButton
+import co.edu.eafit.appeafit.ui.components.GradientHeroBox
 
 @Composable
 fun LoginScreen(
@@ -55,97 +57,120 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(EafitNavy)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 72.dp, bottom = 40.dp, start = 32.dp, end = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
+        GradientHeroBox {
+            Column(
                 modifier = Modifier
-                    .size(72.dp)
-                    .background(Color.White.copy(alpha = 0.1f), CircleShape),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(top = 72.dp, bottom = 40.dp, start = 32.dp, end = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("E", color = Color.White, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineLarge)
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .background(Color.White.copy(alpha = 0.12f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("E", color = Color.White, fontWeight = FontWeight.Black, style = MaterialTheme.typography.headlineLarge)
+                }
+                androidx.compose.foundation.layout.Spacer(Modifier.height(20.dp))
+                Text(
+                    text = stringResource(R.string.auth_welcome_title),
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.auth_welcome_subtitle),
+                    color = Color.White.copy(alpha = 0.75f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            androidx.compose.foundation.layout.Spacer(Modifier.height(20.dp))
-            Text(
-                text = androidx.compose.ui.res.stringResource(R.string.auth_welcome_title),
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
-            Text(
-                text = androidx.compose.ui.res.stringResource(R.string.auth_welcome_subtitle),
-                color = Color.White.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
-            )
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                .padding(24.dp)
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(tween(400, delayMillis = 80)) + slideInVertically(tween(400, delayMillis = 80)) { it / 5 }
         ) {
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_email_label)) },
-                placeholder = { Text(androidx.compose.ui.res.stringResource(R.string.auth_email_placeholder)) },
-                leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(14.dp))
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.auth_password_label)) },
-                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (uiState.errorMessage != null) {
-                androidx.compose.foundation.layout.Spacer(Modifier.height(10.dp))
-                Text(uiState.errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
-
-            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onGoToForgotPassword, modifier = Modifier.align(Alignment.End)) {
-                Text(androidx.compose.ui.res.stringResource(R.string.auth_forgot_password))
-            }
-
-            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = { onLogin(email, password) },
-                enabled = !uiState.isLoading,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                    .padding(24.dp)
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
-                } else {
-                    Text(androidx.compose.ui.res.stringResource(R.string.auth_login_button))
-                }
-            }
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text(stringResource(R.string.auth_email_label)) },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.auth_email_placeholder),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(14.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.auth_password_label)) },
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
-            TextButton(onClick = onGoToRegister, modifier = Modifier.fillMaxWidth()) {
-                Text(androidx.compose.ui.res.stringResource(R.string.auth_no_account))
+                AnimatedVisibility(visible = uiState.errorMessage != null) {
+                    Column {
+                        androidx.compose.foundation.layout.Spacer(Modifier.height(10.dp))
+                        Text(
+                            uiState.errorMessage.orEmpty(),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onGoToForgotPassword, modifier = Modifier.align(Alignment.End)) {
+                    Text(stringResource(R.string.auth_forgot_password), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+
+                androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+                EafitButton(
+                    text = stringResource(R.string.auth_login_button),
+                    onClick = { onLogin(email, password) },
+                    enabled = !uiState.isLoading,
+                    isLoading = uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
+                TextButton(onClick = onGoToRegister, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(R.string.auth_no_account),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

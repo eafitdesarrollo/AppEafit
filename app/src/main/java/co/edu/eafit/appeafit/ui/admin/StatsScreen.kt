@@ -1,5 +1,9 @@
 package co.edu.eafit.appeafit.ui.admin
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,8 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -28,12 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.core.di.AppContainer
-import co.edu.eafit.appeafit.domain.model.LostItemStatus
-import co.edu.eafit.appeafit.domain.model.ReservationStatus
 import co.edu.eafit.appeafit.domain.model.Role
+import co.edu.eafit.appeafit.ui.components.EafitCard
 
 private data class Stat(val label: String, val value: Int)
 
@@ -44,15 +46,13 @@ fun StatsScreen(container: AppContainer, onBack: () -> Unit) {
 
     LaunchedEffect(Unit) {
         val users = container.userRepository.listUsers().getOrDefault(emptyList())
-        val lostItems = container.lostItemRepository.list().getOrDefault(emptyList())
-        val reservations = container.reservationRepository.listAll().getOrDefault(emptyList())
+        val courses = container.courseRepository.listAllCourses().getOrDefault(emptyList())
 
         stats = listOf(
             Stat("Estudiantes", users.count { it.role == Role.STUDENT }),
             Stat("Profesores", users.count { it.role == Role.PROFESSOR }),
             Stat("Administrativos", users.count { it.role == Role.STAFF }),
-            Stat("Objetos perdidos activos", lostItems.count { it.status != LostItemStatus.CLAIMED.id }),
-            Stat("Reservas pendientes", reservations.count { it.status == ReservationStatus.PENDING.id }),
+            Stat("Cursos activos", courses.size),
             Stat("Total usuarios", users.size)
         )
     }
@@ -72,11 +72,21 @@ fun StatsScreen(container: AppContainer, onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(stats) { stat ->
-                Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                        Text(stat.value.toString(), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
-                        Text(stat.label, style = MaterialTheme.typography.bodyMedium)
+            itemsIndexed(stats) { index, stat ->
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(tween(300, delayMillis = index * 60)) + scaleIn(tween(300, delayMillis = index * 60), initialScale = 0.85f)
+                ) {
+                    EafitCard(shape = MaterialTheme.shapes.large) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                            Text(stat.value.toString(), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+                            Text(
+                                stat.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }

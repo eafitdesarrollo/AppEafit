@@ -1,5 +1,10 @@
 package co.edu.eafit.appeafit.ui.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,7 +41,14 @@ fun EafitNavHost(container: AppContainer) {
         }
     }
 
-    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.SPLASH,
+        enterTransition = { slideInHorizontally(tween(280)) { it / 4 } + fadeIn(tween(280)) },
+        exitTransition = { fadeOut(tween(180)) },
+        popEnterTransition = { fadeIn(tween(220)) },
+        popExitTransition = { slideOutHorizontally(tween(280)) { it / 4 } + fadeOut(tween(220)) }
+    ) {
         composable(Routes.SPLASH) { SplashScreen() }
 
         composable(Routes.LOGIN) {

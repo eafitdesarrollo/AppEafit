@@ -1,5 +1,9 @@
 package co.edu.eafit.appeafit.ui.professor
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,8 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Groups
@@ -17,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -35,6 +38,7 @@ import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.core.di.GenericViewModelFactory
 import co.edu.eafit.appeafit.domain.model.Course
+import co.edu.eafit.appeafit.ui.components.EafitCard
 import co.edu.eafit.appeafit.ui.components.EmptyState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -73,13 +77,25 @@ fun MyCoursesScreen(container: AppContainer, professorId: String, onBack: () -> 
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            items(courses, key = { it.id }) { course ->
-                Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text(course.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Text("${course.code} · ${course.credits} créditos", style = MaterialTheme.typography.bodySmall)
-                        course.schedule.forEach { slot ->
-                            Text("${slot.day} ${slot.startTime}-${slot.endTime} · ${slot.room}", style = MaterialTheme.typography.bodySmall)
+            itemsIndexed(courses, key = { _, item -> item.id }) { index, course ->
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(tween(300, delayMillis = index * 40)) +
+                        slideInVertically(tween(300, delayMillis = index * 40)) { it / 4 }
+                ) {
+                    EafitCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(
+                                course.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text("${course.code} · ${course.credits} créditos", style = MaterialTheme.typography.bodySmall)
+                            course.schedule.forEach { slot ->
+                                Text("${slot.day} ${slot.startTime}-${slot.endTime} · Virtual", style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }

@@ -65,8 +65,6 @@
     <string name="service_schedule">Horario</string>
     <string name="service_gpa_calculator">Calculadora de promedio</string>
     <string name="service_library">Biblioteca</string>
-    <string name="service_lost_items">Objetos perdidos</string>
-    <string name="service_space_reservation">Reserva de espacios</string>
     <string name="service_academic_calendar">Calendario académico</string>
     <string name="service_teacher_evaluation">Evaluación docente</string>
 
@@ -79,8 +77,6 @@
     <!-- Staff services -->
     <string name="service_directory">Directorio institucional</string>
     <string name="service_manage_announcements">Gestionar anuncios</string>
-    <string name="service_manage_reservations">Gestionar reservas</string>
-    <string name="service_manage_lost_items">Gestionar objetos perdidos</string>
 
     <!-- Admin services -->
     <string name="service_manage_users">Gestión de usuarios</string>

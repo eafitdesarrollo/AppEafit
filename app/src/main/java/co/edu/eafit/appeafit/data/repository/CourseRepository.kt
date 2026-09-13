@@ -21,7 +21,7 @@ private const val COURSES_COLLECTION = "courses"
 private const val ENROLLMENTS_COLLECTION = "enrollments"
 
 @Serializable
-private data class ScheduleSlotDto(val day: String, val startTime: String, val endTime: String, val room: String)
+private data class ScheduleSlotDto(val day: String, val startTime: String, val endTime: String)
 
 class CourseRepository(
     private val firestore: FirebaseFirestore,
@@ -39,12 +39,12 @@ class CourseRepository(
             professorId = professorId,
             professorName = professorName,
             credits = credits,
-            schedule = slots.map { ScheduleSlot(it.day, it.startTime, it.endTime, it.room) }
+            schedule = slots.map { ScheduleSlot(it.day, it.startTime, it.endTime) }
         )
     }
 
     private fun Course.toEntity(): CachedCourseEntity {
-        val slots = schedule.map { ScheduleSlotDto(it.day, it.startTime, it.endTime, it.room) }
+        val slots = schedule.map { ScheduleSlotDto(it.day, it.startTime, it.endTime) }
         return CachedCourseEntity(
             id = id,
             name = name,

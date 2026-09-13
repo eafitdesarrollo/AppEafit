@@ -9,10 +9,8 @@ import co.edu.eafit.appeafit.data.repository.CalendarRepository
 import co.edu.eafit.appeafit.data.repository.CourseRepository
 import co.edu.eafit.appeafit.data.repository.GradeRepository
 import co.edu.eafit.appeafit.data.repository.LoanRepository
-import co.edu.eafit.appeafit.data.repository.LostItemRepository
 import co.edu.eafit.appeafit.data.repository.NewsRepository
 import co.edu.eafit.appeafit.data.repository.NotificationRepository
-import co.edu.eafit.appeafit.data.repository.ReservationRepository
 import co.edu.eafit.appeafit.data.repository.SettingsRepository
 import co.edu.eafit.appeafit.data.repository.TeacherEvaluationRepository
 import co.edu.eafit.appeafit.data.repository.UserRepository
@@ -39,9 +37,7 @@ class AppContainer(context: Context) {
     val courseRepository = CourseRepository(firestore, database.courseDao(), database.enrollmentDao())
     val gradeRepository = GradeRepository(firestore, database.gradeDao())
     val calendarRepository = CalendarRepository(firestore, database.calendarEventDao())
-    val lostItemRepository = LostItemRepository(firestore)
     val loanRepository = LoanRepository(firestore)
-    val reservationRepository = ReservationRepository(firestore)
     val notificationRepository = NotificationRepository(firestore)
     val attendanceRepository = AttendanceRepository(firestore)
     val settingsRepository = SettingsRepository(context.applicationContext)

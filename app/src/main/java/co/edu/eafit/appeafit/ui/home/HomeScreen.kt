@@ -1,5 +1,10 @@
 package co.edu.eafit.appeafit.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
@@ -30,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,6 +43,7 @@ import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.core.di.GenericViewModelFactory
 import co.edu.eafit.appeafit.domain.model.User
+import co.edu.eafit.appeafit.ui.components.GradientHeroBox
 import co.edu.eafit.appeafit.ui.components.NewsCard
 import co.edu.eafit.appeafit.ui.components.SectionHeader
 import co.edu.eafit.appeafit.ui.components.ServiceCard
@@ -53,34 +59,37 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
     val favorites = remember(user.role) { ServiceCatalog.forRole(user.role).take(4) }
 
     Column(modifier = Modifier.fillMaxSize().padding(bottom = 8.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    "¡Qué gusto verte!",
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    user.fullName.substringBefore(" ").ifBlank { "Eafitense" },
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            }
-            IconButton(onClick = { navController.navigate(Routes.NOTIFICATIONS) }) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)) {
-                    Icon(
-                        Icons.Filled.Notifications,
-                        contentDescription = stringResource(R.string.notifications_title),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.padding(8.dp)
+        GradientHeroBox {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "¡Qué gusto verte!",
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.bodyMedium
                     )
+                    Text(
+                        user.fullName.substringBefore(" ").ifBlank { "Eafitense" },
+                        color = androidx.compose.ui.graphics.Color.White,
+                        style = MaterialTheme.typography.headlineSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                IconButton(onClick = { navController.navigate(Routes.NOTIFICATIONS) }) {
+                    Surface(shape = CircleShape, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.15f)) {
+                        Icon(
+                            Icons.Filled.Notifications,
+                            contentDescription = stringResource(R.string.notifications_title),
+                            tint = androidx.compose.ui.graphics.Color.White,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
                 }
             }
         }
@@ -95,36 +104,53 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
                 onValueChange = { search = it },
                 placeholder = { Text(stringResource(R.string.common_search_hint)) },
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)
             )
-            SectionHeader(title = "Favoritos", modifier = Modifier.padding(horizontal = 20.dp))
-            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+
+            val favoritesVisible = remember { MutableTransitionState(false).apply { targetState = true } }
+            AnimatedVisibility(
+                visibleState = favoritesVisible,
+                enter = fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 5 }
             ) {
-                items(favorites) { entry ->
-                    ServiceCard(
-                        icon = entry.icon,
-                        label = stringResource(entry.labelResId),
-                        modifier = Modifier.size(96.dp),
-                        onClick = { navController.navigate(entry.route) }
-                    )
+                Column {
+                    SectionHeader(title = "Favoritos", modifier = Modifier.padding(horizontal = 20.dp))
+                    androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(favorites) { entry ->
+                            ServiceCard(
+                                icon = entry.icon,
+                                label = stringResource(entry.labelResId),
+                                modifier = Modifier.size(96.dp),
+                                onClick = { navController.navigate(entry.route) }
+                            )
+                        }
+                    }
                 }
             }
 
             if (news.isNotEmpty()) {
-                androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
-                SectionHeader(title = "Actualidad EAFIT", modifier = Modifier.padding(horizontal = 20.dp))
-                androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                val newsVisible = remember { MutableTransitionState(false).apply { targetState = true } }
+                AnimatedVisibility(
+                    visibleState = newsVisible,
+                    enter = fadeIn(tween(400, delayMillis = 80)) + slideInVertically(tween(400, delayMillis = 80)) { it / 5 }
                 ) {
-                    items(news, key = { it.id }) { item -> NewsCard(item = item) }
+                    Column {
+                        androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
+                        SectionHeader(title = "Actualidad EAFIT", modifier = Modifier.padding(horizontal = 20.dp))
+                        androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            items(news, key = { it.id }) { item -> NewsCard(item = item) }
+                        }
+                        androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
+                    }
                 }
-                androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
             }
         }
     }
