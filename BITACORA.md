@@ -393,6 +393,19 @@ eliminarla (no los roles, que sí hacen falta para el próximo deploy de índice
   `AppCompatDelegate.setApplicationLocales()`, ver punto 21 de la sección 8). Revisar si
   se elimina o si se usa de verdad como respaldo.
 
+### Datos huérfanos en Firestore de producción (hallado 2026-09-13 noche, ver punto 22)
+- Las colecciones `lostItems` (1 documento, "audífonos") y `spaces` (2 documentos,
+  "Auditorio 2" y otro) **siguen existiendo en la base de datos real** (`appeafit-297d5`)
+  a pesar de que la sección 1 y el punto 18 de la sección 8 afirman que "objetos
+  perdidos" y "reserva de espacios" se eliminaron por completo, código + Firestore. Lo
+  que se eliminó completo fue el código y las reglas (confirmado: `firestore.rules` ya
+  no menciona esas colecciones); los documentos que ya existían antes de esa eliminación
+  simplemente quedaron huérfanos, inaccesibles desde la app (sin reglas que los permitan)
+  pero visibles en la consola. Borrarlos manualmente en
+  `https://console.firebase.google.com/project/appeafit-297d5/firestore` (colecciones
+  `lostItems` y `spaces`) es solo limpieza cosmética, sin ningún riesgo de seguridad ni
+  urgencia.
+
 ### Cosméticas / bajo impacto (no se tocaron, prioridad baja)
 - Buscador de `HomeScreen` es puramente decorativo (no filtra nada todavía).
 - `EafitMessagingService.showNotification` usa un ID aleatorio (`Random.nextInt()`)
@@ -908,3 +921,72 @@ las pantallas autenticadas en el emulador (ver punto 6); no se removió la depen
 `androidx.appcompat` sin usar (ver sección 6, pendientes); no se investigó qué sesión
 anterior dejó este trabajo sin commitear ni por qué — no hay forma de saberlo desde el
 historial de git porque nunca se llegó a commitear.
+
+---
+
+### 2026-09-13 — Santiago Guerrero Parrado
+
+**Contexto**: continuación directa de la entrada anterior (mismo día, misma revisión
+completa del proyecto pedida por Santiago Guerrero Parrado). Esta entrada cubre lo que la
+anterior dejó explícitamente pendiente ("Qué NO se hizo en esta entrada") más dos
+hallazgos nuevos de comparar la BITACORA contra el estado real de Firebase.
+
+**21. Verificación end-to-end en el emulador, incluyendo login real (pendiente de la
+entrada anterior).** Con el AVD `Pixel_8_API_36` (celular físico seguía sin USB
+disponible), se instaló el APK debug y se inició sesión con
+`estudiante.demo@eafit.edu.co`. Confirmado visualmente, todo correcto:
+- Login, Home, Perfil y Configuración cargan **completamente traducidos al inglés**
+  (idioma del sistema del emulador), incluyendo textos que antes eran hardcodeados
+  (`"Great to see you!"`, `"Favorites"`, `"EAFIT News"`, el badge de rol `"Student"`
+  vía `Role.displayLabel()`, y el botón `"Sign out"` ya en su nuevo color de error).
+  El contenido que sí sigue en español correctamente (títulos y categorías de noticias
+  reales, ej. "Actualización de horarios de biblioteca" / "Biblioteca") es dato de
+  Firestore, no texto de la UI — no debía traducirse.
+- En **Perfil → Configuración** los tres controles (notificaciones / apariencia /
+  idioma) se ven y funcionan como describe el punto 21 de la entrada anterior. Se
+  cambió el selector de apariencia a **Oscuro** en vivo (sin reiniciar la Activity) y
+  se confirmó la corrección de contraste: las tres tarjetas (`Push notifications`,
+  `Appearance`, `Language`) se distinguen claramente del fondo casi negro — ya no es
+  "un bloque negro plano".
+- No se encontró ningún texto "fantasma" en español en las pantallas recorridas
+  (Login, Home, Perfil, Configuración).
+
+**22. Dos hallazgos de desactualización en esta misma BITACORA, encontrados al comparar
+contra Firebase Console y el propio repo (no cambios de código, solo documentación +
+un archivo de configuración muerto):**
+- **Datos huérfanos en Firestore de producción.** La sección 1 y el punto 18 de la
+  entrada del 2026-09-13 (tarde) afirman que "objetos perdidos" y "reserva de espacios"
+  se eliminaron por completo, código + Firestore. Revisando la consola de
+  `appeafit-297d5` directamente, las colecciones `lostItems` (1 documento) y `spaces`
+  (2 documentos) **todavía existen** — lo que se eliminó por completo fue el código y
+  las reglas (`firestore.rules` ya no las menciona, así que son inaccesibles desde la
+  app), pero los documentos que ya existían antes de esa eliminación nunca se borraron
+  de la base de datos real. Sin riesgo de seguridad (nada puede leerlos/escribirlos ya),
+  pero la afirmación de "eliminado por completo" era imprecisa. Documentado como
+  pendiente de limpieza manual en la sección 6; no se borraron los documentos en esta
+  entrada porque la automatización de navegador disponible no logró completar la
+  acción de forma confiable (la consola de Firebase no respondió de forma consistente a
+  los clics automatizados) y no vale la pena forzarlo para 3 documentos de prueba sin
+  ningún impacto.
+- **Índice muerto en `firestore.indexes.json`.** El archivo todavía tenía un índice
+  compuesto para `collectionGroup: "reservations"` (campos `userId`/`createdAt`), una
+  colección que ya no existe ni en el código ni en las reglas desde el punto 18 de la
+  entrada anterior. Se quitó ese bloque del archivo en esta entrada. Como los índices de
+  este archivo **todavía no se han desplegado** (pendiente documentado en la sección 4,
+  falta el rol de IAM), este índice muerto nunca llegó a producción — es limpieza pura
+  del repo, no un cambio de comportamiento.
+
+**23. Verificación adicional (sin cambios encontrados):** se releyó `firestore.rules`
+desplegado en la consola línea por línea contra el archivo del repo — coinciden. Se
+confirmó que la carpeta padre (`Movil/EAFIT/`) solo contiene `repo/` y `.claude/` (nada
+de código), consistente con lo ya corregido en la entrada anterior sobre las 14 capturas
+de pantalla que ya no están.
+
+**24. Commit y push.** Se commiteó `firestore.indexes.json` (índice muerto eliminado) y
+esta actualización de `BITACORA.md`, y se hizo push a
+`https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).
+
+**Qué queda pendiente** (ver también sección 6): borrar manualmente los 3 documentos
+huérfanos de `lostItems`/`spaces` desde la consola de Firebase; decidir si se elimina la
+dependencia `androidx.appcompat` sin usar; desplegar `firestore.indexes.json` (falta el
+rol de IAM) y `storage.rules` (falta que EAFIT active facturación).
