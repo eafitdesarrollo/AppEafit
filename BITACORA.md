@@ -990,3 +990,32 @@ esta actualización de `BITACORA.md`, y se hizo push a
 huérfanos de `lostItems`/`spaces` desde la consola de Firebase; decidir si se elimina la
 dependencia `androidx.appcompat` sin usar; desplegar `firestore.indexes.json` (falta el
 rol de IAM) y `storage.rules` (falta que EAFIT active facturación).
+
+---
+
+### 2026-09-14 — Santiago Guerrero Parrado
+
+**25. Orientación de pantalla bloqueada en vertical (pedido explícito de Santiago
+Guerrero Parrado: "que no permita que el celular se rote... que siempre quede
+vertical").** Archivo: `app/src/main/AndroidManifest.xml`. Se agregó
+`android:screenOrientation="portrait"` a la única `<activity>` de la app
+(`MainActivity`) — al ser una app de una sola Activity (todas las pantallas son
+composables dentro del mismo `NavHost`), esto es suficiente para bloquear la app
+completa, no hace falta tocarlo pantalla por pantalla.
+
+**Verificación**: se compiló (`./gradlew assembleDebug`, exitoso) y se instaló en el
+emulador `Pixel_8_API_36`. Con la app abierta y con sesión ya iniciada (cuenta demo de
+estudiante), se forzó rotación a horizontal a nivel de sistema
+(`adb shell settings put system accelerometer_rotation 0` +
+`adb shell settings put system user_rotation 1`) y se confirmó por captura de pantalla
+que la app **se mantiene en vertical** tanto en la pantalla de splash como en Home — no
+rota. Se restauró `accelerometer_rotation` a `1` (auto-rotar) al terminar, para no dejar
+esa configuración del sistema del emulador alterada.
+
+**Impacto**: ninguna pantalla de la app estaba diseñada pensando en horizontal (no hay
+layouts alternativos en `res/layout-land/` ni nada equivalente en Compose), así que este
+cambio solo evita que el usuario caiga sin querer en un estado no soportado — no quita
+ninguna funcionalidad.
+
+**Commit y push**: cambio commiteado y subido a
+`https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).
