@@ -33,6 +33,7 @@ import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.domain.model.Role
 import co.edu.eafit.appeafit.ui.components.EafitButton
 import co.edu.eafit.appeafit.ui.components.EafitCard
+import co.edu.eafit.appeafit.ui.components.displayLabel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +45,7 @@ fun BroadcastScreen(container: AppContainer, onBack: () -> Unit) {
     var sent by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    val targets = listOf("all" to "Todos") + Role.entries.map { it.id to it.label }
+    val targets = listOf("all" to stringResource(R.string.broadcast_target_all)) + Role.entries.map { it.id to it.displayLabel() }
 
     Scaffold(
         topBar = {
@@ -55,11 +56,11 @@ fun BroadcastScreen(container: AppContainer, onBack: () -> Unit) {
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.broadcast_title_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
-            OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text("Mensaje") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text(stringResource(R.string.broadcast_message_label)) }, modifier = Modifier.fillMaxWidth())
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
-            Text("Enviar a:", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.broadcast_send_to), style = MaterialTheme.typography.titleSmall)
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp))
             EafitCard {
                 Column {
@@ -79,7 +80,7 @@ fun BroadcastScreen(container: AppContainer, onBack: () -> Unit) {
             }
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
             EafitButton(
-                text = if (sent) "Enviado ✓" else "Enviar notificación",
+                text = if (sent) stringResource(R.string.broadcast_sent) else stringResource(R.string.service_broadcast),
                 onClick = {
                     scope.launch {
                         container.notificationRepository.broadcast(title, body, target)

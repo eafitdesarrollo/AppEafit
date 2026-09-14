@@ -15,10 +15,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,7 +71,7 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "¡Qué gusto verte!",
+                        stringResource(R.string.home_greeting),
                         color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -114,7 +116,7 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
                 enter = fadeIn(tween(350)) + slideInVertically(tween(350)) { it / 5 }
             ) {
                 Column {
-                    SectionHeader(title = "Favoritos", modifier = Modifier.padding(horizontal = 20.dp))
+                    SectionHeader(title = stringResource(R.string.home_favorites), modifier = Modifier.padding(horizontal = 20.dp))
                     androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 20.dp),
@@ -124,7 +126,7 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
                             ServiceCard(
                                 icon = entry.icon,
                                 label = stringResource(entry.labelResId),
-                                modifier = Modifier.size(96.dp),
+                                modifier = Modifier.width(108.dp),
                                 onClick = { navController.navigate(entry.route) }
                             )
                         }
@@ -132,24 +134,49 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
                 }
             }
 
-            if (news.isNotEmpty()) {
-                val newsVisible = remember { MutableTransitionState(false).apply { targetState = true } }
-                AnimatedVisibility(
-                    visibleState = newsVisible,
-                    enter = fadeIn(tween(400, delayMillis = 80)) + slideInVertically(tween(400, delayMillis = 80)) { it / 5 }
-                ) {
-                    Column {
-                        androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
-                        SectionHeader(title = "Actualidad EAFIT", modifier = Modifier.padding(horizontal = 20.dp))
-                        androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+            val newsVisible = remember { MutableTransitionState(false).apply { targetState = true } }
+            AnimatedVisibility(
+                visibleState = newsVisible,
+                enter = fadeIn(tween(400, delayMillis = 80)) + slideInVertically(tween(400, delayMillis = 80)) { it / 5 }
+            ) {
+                Column {
+                    androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
+                    SectionHeader(title = stringResource(R.string.home_news_section), modifier = Modifier.padding(horizontal = 20.dp))
+                    androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                    if (news.isNotEmpty()) {
                         LazyRow(
                             contentPadding = PaddingValues(horizontal = 20.dp),
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             items(news, key = { it.id }) { item -> NewsCard(item = item) }
                         }
-                        androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
+                    } else {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Filled.Campaign,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+                                Text(
+                                    stringResource(R.string.home_news_empty),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
                     }
+                    androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
                 }
             }
         }

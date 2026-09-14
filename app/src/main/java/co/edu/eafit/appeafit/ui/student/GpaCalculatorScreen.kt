@@ -71,7 +71,7 @@ fun GpaCalculatorScreen(onBack: () -> Unit) {
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { entries.add(GpaEntry(name = "", credits = "3", grade = "")) }) {
-                Icon(Icons.Filled.Add, contentDescription = "Agregar materia")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.gpa_add_subject))
             }
         }
     ) { padding ->
@@ -82,7 +82,7 @@ fun GpaCalculatorScreen(onBack: () -> Unit) {
                     .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)))
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                    Text("Promedio ponderado", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.gpa_weighted_average), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodyMedium)
                     AnimatedContent(
                         targetState = average,
                         transitionSpec = { (fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 3 }) togetherWith fadeOut(tween(0)) },
@@ -108,7 +108,7 @@ fun GpaCalculatorScreen(onBack: () -> Unit) {
                             OutlinedTextField(
                                 value = entry.name,
                                 onValueChange = { entry.name = it },
-                                placeholder = { Text("Materia") },
+                                placeholder = { Text(stringResource(R.string.gpa_subject)) },
                                 singleLine = true,
                                 shape = MaterialTheme.shapes.small,
                                 modifier = Modifier.weight(1f)
@@ -116,7 +116,7 @@ fun GpaCalculatorScreen(onBack: () -> Unit) {
                             OutlinedTextField(
                                 value = entry.credits,
                                 onValueChange = { entry.credits = it },
-                                placeholder = { Text("Créd.") },
+                                placeholder = { Text(stringResource(R.string.gpa_credits_abbrev)) },
                                 singleLine = true,
                                 shape = MaterialTheme.shapes.small,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -125,7 +125,7 @@ fun GpaCalculatorScreen(onBack: () -> Unit) {
                             OutlinedTextField(
                                 value = entry.grade,
                                 onValueChange = { entry.grade = it },
-                                placeholder = { Text("Nota") },
+                                placeholder = { Text(stringResource(R.string.gpa_grade)) },
                                 singleLine = true,
                                 shape = MaterialTheme.shapes.small,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

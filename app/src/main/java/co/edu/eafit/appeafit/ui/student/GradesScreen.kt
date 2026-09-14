@@ -81,7 +81,7 @@ fun GradesScreen(container: AppContainer, studentId: String, onBack: () -> Unit)
                         .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)))
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                        Text("Promedio general", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.grades_overall_average), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodyMedium)
                         AnimatedContent(
                             targetState = state.overallAverage,
                             transitionSpec = { (fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 3 }) togetherWith fadeOut(tween(0)) },

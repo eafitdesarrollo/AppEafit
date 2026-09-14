@@ -79,14 +79,19 @@ class CalendarViewModel(private val container: AppContainer) : ViewModel() {
     }
 }
 
-private val LOCALE_ES = Locale.forLanguageTag("es-CO")
+// No se cachea en un val de nivel de archivo: Locale.getDefault() debe leerse en
+// cada uso para reflejar el idioma elegido en Configuración justo después de que
+// MainActivity.attachBaseContext lo aplique con Locale.setDefault() en el
+// arranque de la Activity (un val de nivel de archivo quedaría con el valor
+// del primer idioma cargado en el proceso, aunque luego se recree la Activity).
+private fun currentLocale(): Locale = Locale.getDefault()
 private val WEEK_DAYS = listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
 
 private fun Long.toLocalDate(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
 
-private fun String.capitalizeEs(): String =
-    replaceFirstChar { if (it.isLowerCase()) it.titlecase(LOCALE_ES) else it.toString() }
+private fun String.capitalizeLocalized(): String =
+    replaceFirstChar { if (it.isLowerCase()) it.titlecase(currentLocale()) else it.toString() }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,7 +123,7 @@ fun AcademicCalendarScreen(container: AppContainer, onBack: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { visibleMonth = visibleMonth.minusMonths(1) }) {
-                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Mes anterior")
+                    Icon(Icons.Filled.ChevronLeft, contentDescription = stringResource(R.string.calendar_previous_month))
                 }
                 AnimatedContent(
                     targetState = visibleMonth,
@@ -126,7 +131,7 @@ fun AcademicCalendarScreen(container: AppContainer, onBack: () -> Unit) {
                     label = "monthLabel"
                 ) { month ->
                     Text(
-                        text = "${month.month.getDisplayName(TextStyle.FULL, LOCALE_ES).capitalizeEs()} ${month.year}",
+                        text = "${month.month.getDisplayName(TextStyle.FULL, currentLocale()).capitalizeLocalized()} ${month.year}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -134,7 +139,7 @@ fun AcademicCalendarScreen(container: AppContainer, onBack: () -> Unit) {
                     )
                 }
                 IconButton(onClick = { visibleMonth = visibleMonth.plusMonths(1) }) {
-                    Icon(Icons.Filled.ChevronRight, contentDescription = "Mes siguiente")
+                    Icon(Icons.Filled.ChevronRight, contentDescription = stringResource(R.string.calendar_next_month))
                 }
             }
 
@@ -142,7 +147,7 @@ fun AcademicCalendarScreen(container: AppContainer, onBack: () -> Unit) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
                 WEEK_DAYS.forEach { day ->
                     Text(
-                        text = day.getDisplayName(TextStyle.NARROW, LOCALE_ES).uppercase(LOCALE_ES),
+                        text = day.getDisplayName(TextStyle.NARROW, currentLocale()).uppercase(currentLocale()),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -234,7 +239,7 @@ fun AcademicCalendarScreen(container: AppContainer, onBack: () -> Unit) {
             ) { day ->
                 if (dayEvents.isEmpty()) {
                     EmptyState(
-                        message = if (day == today) "No tienes eventos programados para hoy" else "Sin eventos programados para este día",
+                        message = if (day == today) stringResource(R.string.calendar_no_events_today) else stringResource(R.string.calendar_no_events_day),
                         icon = Icons.Filled.EventAvailable
                     )
                 } else {
@@ -245,7 +250,12 @@ fun AcademicCalendarScreen(container: AppContainer, onBack: () -> Unit) {
                     ) {
                         item {
                             Text(
-                                text = "${day.dayOfWeek.getDisplayName(TextStyle.FULL, LOCALE_ES).capitalizeEs()} ${day.dayOfMonth} de ${day.month.getDisplayName(TextStyle.FULL, LOCALE_ES)}",
+                                text = stringResource(
+                                    R.string.calendar_day_header,
+                                    day.dayOfWeek.getDisplayName(TextStyle.FULL, currentLocale()).capitalizeLocalized(),
+                                    day.dayOfMonth,
+                                    day.month.getDisplayName(TextStyle.FULL, currentLocale())
+                                ),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 maxLines = 1,

@@ -37,7 +37,7 @@ import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.domain.model.Role
 import co.edu.eafit.appeafit.ui.components.EafitCard
 
-private data class Stat(val label: String, val value: Int)
+private data class Stat(val labelResId: Int, val value: Int)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,11 +49,11 @@ fun StatsScreen(container: AppContainer, onBack: () -> Unit) {
         val courses = container.courseRepository.listAllCourses().getOrDefault(emptyList())
 
         stats = listOf(
-            Stat("Estudiantes", users.count { it.role == Role.STUDENT }),
-            Stat("Profesores", users.count { it.role == Role.PROFESSOR }),
-            Stat("Administrativos", users.count { it.role == Role.STAFF }),
-            Stat("Cursos activos", courses.size),
-            Stat("Total usuarios", users.size)
+            Stat(R.string.stats_students, users.count { it.role == Role.STUDENT }),
+            Stat(R.string.stats_professors, users.count { it.role == Role.PROFESSOR }),
+            Stat(R.string.stats_staff, users.count { it.role == Role.STAFF }),
+            Stat(R.string.stats_active_courses, courses.size),
+            Stat(R.string.stats_total_users, users.size)
         )
     }
 
@@ -81,7 +81,7 @@ fun StatsScreen(container: AppContainer, onBack: () -> Unit) {
                         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
                             Text(stat.value.toString(), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
                             Text(
-                                stat.label,
+                                stringResource(stat.labelResId),
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis

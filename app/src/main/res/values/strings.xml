@@ -53,6 +53,17 @@
     <string name="profile_settings">Configuración</string>
     <string name="profile_app_version">Versión %1$s</string>
 
+    <!-- Settings -->
+    <string name="settings_notifications_title">Notificaciones push</string>
+    <string name="settings_notifications_desc">Recibe avisos de anuncios y novedades institucionales</string>
+    <string name="settings_appearance_title">Apariencia</string>
+    <string name="settings_appearance_desc">Elige si la app se ve clara, oscura, o sigue el modo de tu celular</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_option_system">Sistema</string>
+    <string name="settings_language_title">Idioma</string>
+    <string name="settings_language_desc">Por defecto usa el idioma de tu celular</string>
+
     <!-- Carnet -->
     <string name="carnet_share">Compartir contacto</string>
 
@@ -83,4 +94,95 @@
     <string name="service_manage_content">Gestión de contenido</string>
     <string name="service_broadcast">Enviar notificación</string>
     <string name="service_stats">Estadísticas</string>
+
+    <!-- Service groups -->
+    <string name="service_group_academic">Académico</string>
+    <string name="service_group_library">Biblioteca</string>
+    <string name="service_group_teaching">Docencia</string>
+    <string name="service_group_institutional">Institucional</string>
+    <string name="service_group_admin">Administración</string>
+
+    <!-- Home -->
+    <string name="home_greeting">¡Qué gusto verte!</string>
+    <string name="home_favorites">Favoritos</string>
+    <string name="home_news_section">Actualidad EAFIT</string>
+    <string name="home_news_empty">Todavía no hay anuncios institucionales publicados</string>
+
+    <!-- Roles -->
+    <string name="role_student">Estudiante</string>
+    <string name="role_professor">Profesor</string>
+    <string name="role_staff">Administrativo</string>
+    <string name="role_admin">Administrador</string>
+
+    <!-- Broadcast -->
+    <string name="broadcast_target_all">Todos</string>
+    <string name="broadcast_title_label">Título</string>
+    <string name="broadcast_message_label">Mensaje</string>
+    <string name="broadcast_send_to">Enviar a:</string>
+    <string name="broadcast_sent">Enviado ✓</string>
+
+    <!-- Manage users -->
+    <string name="manage_users_remove_admin_title">¿Quitar el último administrador?</string>
+    <string name="manage_users_remove_admin_body">%1$s es el único administrador activo. Si le quitas el rol de admin, nadie más podrá gestionar usuarios ni contenido hasta que lo restaures manualmente desde la consola de Firebase. ¿Seguro que quieres continuar?</string>
+    <string name="manage_users_remove_admin_confirm">Sí, quitar rol de admin</string>
+    <string name="manage_users_deactivate_admin_title">¿Desactivar el último administrador?</string>
+    <string name="manage_users_deactivate_admin_body">%1$s es el único administrador activo. Si lo desactivas, nadie más podrá gestionar usuarios ni contenido hasta que lo reactives manualmente desde la consola de Firebase. ¿Seguro que quieres continuar?</string>
+    <string name="manage_users_deactivate_admin_confirm">Sí, desactivar</string>
+
+    <!-- Carnet -->
+    <string name="carnet_qr_description">QR carnet</string>
+
+    <!-- Announcements (professor) -->
+    <string name="announcements_subtitle">Publica un anuncio visible para tus estudiantes</string>
+    <string name="announcements_published">Publicado ✓</string>
+    <string name="announcements_publish">Publicar anuncio</string>
+
+    <!-- Grade entry -->
+    <string name="grade_entry_select_course">Selecciona un curso</string>
+    <string name="grade_entry_select_student">Selecciona un estudiante</string>
+    <string name="grade_entry_item_name">Nombre de la evaluación</string>
+    <string name="grade_entry_score">Nota obtenida</string>
+    <string name="grade_entry_max_score">Nota máxima</string>
+    <string name="grade_entry_weight">Porcentaje que vale (%)</string>
+    <string name="grade_entry_saved">Nota guardada ✓</string>
+    <string name="grade_entry_save">Guardar nota</string>
+
+    <!-- My courses (professor) -->
+    <string name="my_courses_empty">No tienes cursos asignados</string>
+    <string name="course_credits">%1$d créditos</string>
+    <string name="virtual_indicator">Virtual</string>
+
+    <!-- Change password -->
+    <string name="change_password_current">Contraseña actual</string>
+    <string name="change_password_new">Nueva contraseña</string>
+
+    <!-- Manage announcements (staff) -->
+    <string name="manage_announcements_new">Nuevo anuncio</string>
+    <string name="manage_announcements_empty">No hay anuncios publicados</string>
+    <string name="manage_announcements_category">Categoría</string>
+    <string name="manage_announcements_content">Contenido</string>
+
+    <!-- GPA calculator -->
+    <string name="gpa_weighted_average">Promedio ponderado</string>
+    <string name="gpa_subject">Materia</string>
+    <string name="gpa_credits_abbrev">Créd.</string>
+    <string name="gpa_grade">Nota</string>
+    <string name="gpa_add_subject">Agregar materia</string>
+
+    <!-- Grades -->
+    <string name="grades_overall_average">Promedio general</string>
+
+    <!-- Stats -->
+    <string name="stats_students">Estudiantes</string>
+    <string name="stats_professors">Profesores</string>
+    <string name="stats_staff">Administrativos</string>
+    <string name="stats_active_courses">Cursos activos</string>
+    <string name="stats_total_users">Total usuarios</string>
+
+    <!-- Academic calendar -->
+    <string name="calendar_previous_month">Mes anterior</string>
+    <string name="calendar_next_month">Mes siguiente</string>
+    <string name="calendar_no_events_today">No tienes eventos programados para hoy</string>
+    <string name="calendar_no_events_day">Sin eventos programados para este día</string>
+    <string name="calendar_day_header">%1$s %2$d de %3$s</string>
 </resources>

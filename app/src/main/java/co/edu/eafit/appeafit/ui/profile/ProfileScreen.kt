@@ -175,8 +175,8 @@ private fun ProfileMenuItem(
     highlighted: Boolean = false,
     onClick: () -> Unit
 ) {
-    val containerColor = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    val contentColor = if (highlighted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val containerColor = if (highlighted) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+    val contentColor = if (highlighted) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
     EafitCard(
         onClick = onClick,
         color = containerColor,

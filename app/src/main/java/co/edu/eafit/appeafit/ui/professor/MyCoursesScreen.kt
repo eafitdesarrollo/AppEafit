@@ -69,7 +69,7 @@ fun MyCoursesScreen(container: AppContainer, professorId: String, onBack: () -> 
         }
     ) { padding ->
         if (courses.isEmpty()) {
-            EmptyState(message = "No tienes cursos asignados", icon = Icons.Filled.Groups, modifier = Modifier.padding(padding))
+            EmptyState(message = stringResource(R.string.my_courses_empty), icon = Icons.Filled.Groups, modifier = Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(
@@ -92,9 +92,9 @@ fun MyCoursesScreen(container: AppContainer, professorId: String, onBack: () -> 
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Text("${course.code} · ${course.credits} créditos", style = MaterialTheme.typography.bodySmall)
+                            Text("${course.code} · ${stringResource(R.string.course_credits, course.credits)}", style = MaterialTheme.typography.bodySmall)
                             course.schedule.forEach { slot ->
-                                Text("${slot.day} ${slot.startTime}-${slot.endTime} · Virtual", style = MaterialTheme.typography.bodySmall)
+                                Text("${slot.day} ${slot.startTime}-${slot.endTime} · ${stringResource(R.string.virtual_indicator)}", style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }

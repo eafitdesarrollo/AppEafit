@@ -58,7 +58,7 @@ fun ChangePasswordScreen(container: AppContainer, onBack: () -> Unit) {
             OutlinedTextField(
                 value = currentPassword,
                 onValueChange = { currentPassword = it },
-                label = { Text("Contraseña actual") },
+                label = { Text(stringResource(R.string.change_password_current)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 shape = MaterialTheme.shapes.small,
@@ -68,7 +68,7 @@ fun ChangePasswordScreen(container: AppContainer, onBack: () -> Unit) {
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
-                label = { Text("Nueva contraseña") },
+                label = { Text(stringResource(R.string.change_password_new)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 shape = MaterialTheme.shapes.small,

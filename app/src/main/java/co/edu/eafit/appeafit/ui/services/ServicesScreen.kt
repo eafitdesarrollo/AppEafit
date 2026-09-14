@@ -27,7 +27,7 @@ import co.edu.eafit.appeafit.ui.components.ServiceCard
 @Composable
 fun ServicesScreen(user: User, navController: NavHostController) {
     val services = remember(user.role) { ServiceCatalog.forRole(user.role) }
-    val grouped = remember(services) { services.groupBy { it.group } }
+    val grouped = remember(services) { services.groupBy { it.groupResId } }
     val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
 
     AnimatedVisibility(
@@ -41,10 +41,10 @@ fun ServicesScreen(user: User, navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            grouped.forEach { (group, entries) ->
+            grouped.forEach { (groupResId, entries) ->
                 item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                     Text(
-                        text = group,
+                        text = stringResource(groupResId),
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

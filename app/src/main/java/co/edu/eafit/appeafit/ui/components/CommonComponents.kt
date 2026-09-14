@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.domain.model.Role
 import co.edu.eafit.appeafit.ui.theme.EafitMotion
@@ -129,47 +131,58 @@ fun ServiceCard(
     val interactionSource = remember { MutableInteractionSource() }
     Surface(
         modifier = modifier
-            .aspectRatio(1f)
+            .fillMaxWidth()
+            .heightIn(min = 116.dp)
             .pressScale(interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(46.dp)
+                    .size(44.dp)
                     .background(
                         Brush.linearGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.16f)
-                            )
+                            listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
                         ),
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.height(8.dp))
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 14.sp
             )
         }
     }
 }
+
+/** Nombre del rol traducido según el idioma activo (el enum [Role] guarda el
+ * label en español porque también se usa para lógica de negocio/Firestore). */
+@Composable
+fun Role.displayLabel(): String = stringResource(
+    when (this) {
+        Role.STUDENT -> R.string.role_student
+        Role.PROFESSOR -> R.string.role_professor
+        Role.STAFF -> R.string.role_staff
+        Role.ADMIN -> R.string.role_admin
+    }
+)
 
 @Composable
 fun RoleBadge(role: Role, modifier: Modifier = Modifier) {
@@ -185,7 +198,7 @@ fun RoleBadge(role: Role, modifier: Modifier = Modifier) {
         color = color.copy(alpha = 0.14f)
     ) {
         Text(
-            text = role.label,
+            text = role.displayLabel(),
             color = color,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,

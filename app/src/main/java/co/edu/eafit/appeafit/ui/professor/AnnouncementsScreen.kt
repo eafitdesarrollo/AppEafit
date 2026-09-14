@@ -46,14 +46,14 @@ fun AnnouncementsScreen(container: AppContainer, authorId: String, onBack: () ->
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            Text("Publica un anuncio visible para tus estudiantes", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.announcements_subtitle), style = MaterialTheme.typography.bodyMedium)
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.broadcast_title_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
-            OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text("Mensaje") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text(stringResource(R.string.broadcast_message_label)) }, modifier = Modifier.fillMaxWidth())
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 20.dp))
             EafitButton(
-                text = if (published) "Publicado ✓" else "Publicar anuncio",
+                text = if (published) stringResource(R.string.announcements_published) else stringResource(R.string.announcements_publish),
                 onClick = {
                     scope.launch {
                         container.newsRepository.publish(

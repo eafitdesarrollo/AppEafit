@@ -52,6 +52,7 @@ import co.edu.eafit.appeafit.domain.model.User
 import co.edu.eafit.appeafit.ui.components.EafitCard
 import co.edu.eafit.appeafit.ui.components.EmptyState
 import co.edu.eafit.appeafit.ui.components.RoleBadge
+import co.edu.eafit.appeafit.ui.components.displayLabel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -162,7 +163,7 @@ fun ManageUsersScreen(container: AppContainer, onBack: () -> Unit) {
                                         DropdownMenu(expanded = roleMenuExpanded, onDismissRequest = { roleMenuExpanded = false }) {
                                             Role.entries.forEach { role ->
                                                 DropdownMenuItem(
-                                                    text = { Text(role.label) },
+                                                    text = { Text(role.displayLabel()) },
                                                     onClick = {
                                                         roleMenuExpanded = false
                                                         if (role != Role.ADMIN && isLastActiveAdmin(person)) {
@@ -187,13 +188,13 @@ fun ManageUsersScreen(container: AppContainer, onBack: () -> Unit) {
     pendingRoleChange?.let { (person, role) ->
         AlertDialog(
             onDismissRequest = { pendingRoleChange = null },
-            title = { Text("¿Quitar el último administrador?") },
-            text = { Text("${person.fullName.ifBlank { person.email }} es el único administrador activo. Si le quitas el rol de admin, nadie más podrá gestionar usuarios ni contenido hasta que lo restaures manualmente desde la consola de Firebase. ¿Seguro que quieres continuar?") },
+            title = { Text(stringResource(R.string.manage_users_remove_admin_title)) },
+            text = { Text(stringResource(R.string.manage_users_remove_admin_body, person.fullName.ifBlank { person.email })) },
             confirmButton = {
                 TextButton(onClick = {
                     applyRoleChange(person, role)
                     pendingRoleChange = null
-                }) { Text("Sí, quitar rol de admin") }
+                }) { Text(stringResource(R.string.manage_users_remove_admin_confirm)) }
             },
             dismissButton = {
                 TextButton(onClick = { pendingRoleChange = null }) { Text(stringResource(R.string.common_cancel)) }
@@ -204,13 +205,13 @@ fun ManageUsersScreen(container: AppContainer, onBack: () -> Unit) {
     pendingDeactivate?.let { person ->
         AlertDialog(
             onDismissRequest = { pendingDeactivate = null },
-            title = { Text("¿Desactivar el último administrador?") },
-            text = { Text("${person.fullName.ifBlank { person.email }} es el único administrador activo. Si lo desactivas, nadie más podrá gestionar usuarios ni contenido hasta que lo reactives manualmente desde la consola de Firebase. ¿Seguro que quieres continuar?") },
+            title = { Text(stringResource(R.string.manage_users_deactivate_admin_title)) },
+            text = { Text(stringResource(R.string.manage_users_deactivate_admin_body, person.fullName.ifBlank { person.email })) },
             confirmButton = {
                 TextButton(onClick = {
                     applyActiveChange(person, false)
                     pendingDeactivate = null
-                }) { Text("Sí, desactivar") }
+                }) { Text(stringResource(R.string.manage_users_deactivate_admin_confirm)) }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeactivate = null }) { Text(stringResource(R.string.common_cancel)) }

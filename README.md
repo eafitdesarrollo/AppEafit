@@ -23,6 +23,9 @@ La app tiene **cuatro roles**, cada uno con su propio panel de servicios:
 > asuman presencialidad (objetos perdidos, reserva de salas/salones, ubicación de aulas). Si vas a
 > agregar una función nueva, ten esto en cuenta antes de diseñarla.
 
+Desde **Perfil → Configuración** cualquier usuario puede elegir tema (sistema/claro/oscuro) e idioma
+(sistema/español/inglés); la app está completamente traducida al inglés.
+
 ## Stack técnico
 
 - **Kotlin + Jetpack Compose** (Material 3), arquitectura MVVM con inyección de dependencias manual

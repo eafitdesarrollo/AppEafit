@@ -35,6 +35,7 @@ import co.edu.eafit.appeafit.domain.model.User
 import co.edu.eafit.appeafit.ui.components.EafitButton
 import co.edu.eafit.appeafit.ui.components.GradientHeroBox
 import co.edu.eafit.appeafit.ui.components.RoleBadge
+import co.edu.eafit.appeafit.ui.components.displayLabel
 import coil.compose.AsyncImage
 
 @Composable
@@ -61,11 +62,12 @@ fun CarnetScreen(user: User) {
                 modifier = Modifier.size(96.dp).background(Color.White, CircleShape)
             )
         } else {
-            Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.15f), modifier = Modifier.size(96.dp)) {
+            Surface(shape = CircleShape, color = Color.White, modifier = Modifier.size(96.dp)) {
                 androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Text(
                         user.fullName.take(1).ifBlank { "E" },
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.headlineLarge
                     )
                 }
@@ -109,7 +111,7 @@ fun CarnetScreen(user: User) {
                 ) {
                     Image(
                         bitmap = qrBitmap.asImageBitmap(),
-                        contentDescription = "QR carnet",
+                        contentDescription = stringResource(R.string.carnet_qr_description),
                         modifier = Modifier.size(200.dp)
                     )
                 }
@@ -117,12 +119,13 @@ fun CarnetScreen(user: User) {
         }
 
         androidx.compose.foundation.layout.Spacer(Modifier.size(24.dp))
+        val roleLabel = user.role.displayLabel()
         EafitButton(
             text = stringResource(R.string.carnet_share),
             onClick = {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "${user.fullName} · ${user.role.label} · ${user.institutionalId} · EAFIT")
+                    putExtra(Intent.EXTRA_TEXT, "${user.fullName} · $roleLabel · ${user.institutionalId} · EAFIT")
                 }
                 context.startActivity(Intent.createChooser(shareIntent, null))
             }

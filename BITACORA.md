@@ -64,6 +64,13 @@ La app tiene **cuatro roles**, cada uno con su propio panel de servicios:
 > se eliminaron por completo (código + Firestore) porque EAFIT aquí es 100% virtual, sin
 > campus físico. Ver la entrada del 2026-09-13 (punto 18) en la sección 8.
 
+Desde el 2026-09-13 (noche), en **Perfil → Configuración** hay dos preferencias nuevas,
+además del switch de notificaciones push: **tema** (sistema / claro / oscuro) e
+**idioma** (sistema / español / inglés). Ambas se guardan en DataStore
+(`SettingsRepository`) y se aplican de inmediato (el tema recompone en caliente; el
+idioma recrea la Activity). La app queda completamente traducida al inglés
+(`values-en/strings.xml`). Ver el punto 21 de la sección 8 para el detalle técnico.
+
 El primer usuario que se registra queda como `student`. Para promover a alguien a
 `professor`, `staff` o `admin`, un administrador debe hacerlo desde
 **Administrador → Gestión de usuarios**, o manualmente cambiando el campo `role` del
@@ -90,11 +97,14 @@ administrador, ya que nadie parte siendo admin).
 
 - Remoto: `https://github.com/eafitdesarrollo/AppEafit.git`, rama `main`.
 - El repo Git real vive en la carpeta `repo/` de este directorio de trabajo; la carpeta
-  padre (`Movil/EAFIT/`) NO es un repo git, solo contiene `repo/` más 14 capturas de
-  pantalla sueltas (`WhatsApp Image ....jpeg`) que son referencias visuales de la app
-  institucional oficial de EAFIT (mockups/QA), no parte del código.
-- Al 2026-09-13 el historial de git tiene un solo commit inicial
-  ("Initial AppEAFIT: Android app with role-based access...").
+  padre (`Movil/EAFIT/`) NO es un repo git. **Actualizado 2026-09-13 (noche)**: las 14
+  capturas de pantalla sueltas (`WhatsApp Image ....jpeg`) que antes vivían en esa carpeta
+  padre ya no están — deben haberse movido o borrado manualmente en algún momento después
+  de la auditoría de la tarde del 2026-09-13; a la fecha la carpeta padre solo contiene
+  `repo/` (y la carpeta de configuración local `.claude/`, que tampoco es parte del código).
+- Al 2026-09-13 el historial de git tiene 4 commits, todos del mismo día salvo el inicial
+  (2026-09-11): "Initial AppEAFIT...", "Auditoria de seguridad...", "Documenta el
+  despliegue de firestore.rules...", "Rediseno completo de la UI...".
 
 ---
 
@@ -126,7 +136,9 @@ data/
   repository/NotificationRepository.kt    Notificaciones (personales, por rol, broadcast) + marcador de "leído" POR USUARIO (subcolección reads/)
   repository/TeacherEvaluationRepository.kt Evaluación docente (creación + verificación de "ya evaluado")
   repository/LoanRepository.kt            Préstamos de biblioteca (renovación con límite y transacción atómica)
-  repository/SettingsRepository.kt        Preferencias locales (DataStore) — ej. notificaciones push activadas/desactivadas
+  repository/SettingsRepository.kt        Preferencias locales (DataStore): notificaciones push, tema (ThemeMode:
+                                          SYSTEM/LIGHT/DARK) e idioma (language_tag: "system"/"es"/"en", con
+                                          languageBlocking() para lectura síncrona desde MainActivity.attachBaseContext)
 
 domain/model/                            Data classes puras (sin dependencias de Firebase/Room): AppNotification, Attendance,
                                           CalendarEvent, Course/Enrollment/ScheduleSlot (sin campo "room" desde 2026-09-13),
@@ -159,9 +171,12 @@ ui/
   admin/                  ManageUsersScreen (con guardia de "último admin"), BroadcastScreen, StatsScreen
 ```
 
-Recursos Android (`app/src/main/res/`): `values/strings.xml` (todos los textos en
-español), `values/colors.xml` (paleta EAFIT), `values/themes.xml`, `drawable/`
-(íconos vectoriales), `mipmap-anydpi-v26/` (ícono de launcher).
+Recursos Android (`app/src/main/res/`): `values/strings.xml` (español, idioma base),
+`values-en/strings.xml` (traducción completa al inglés, misma cantidad de líneas/claves
+que `values/strings.xml` desde el 2026-09-13), `values/colors.xml` (paleta EAFIT),
+`values/themes.xml`, `xml/locales_config.xml` (declara los locales soportados `es`/`en`,
+referenciado desde `android:localeConfig` en el `<application>` del manifest — nuevo
+2026-09-13), `drawable/` (íconos vectoriales), `mipmap-anydpi-v26/` (ícono de launcher).
 
 Configuración de build: `app/build.gradle.kts`, `gradle/libs.versions.toml` (catálogo
 de versiones), `settings.gradle.kts`, `gradle.properties`, `app/proguard-rules.pro`
@@ -294,6 +309,17 @@ sincronización de OneDrive con la carpeta `app/build/generated/`, no del códig
 soluciona con `./gradlew --stop` y borrando `app/build/generated/ksp` antes de
 recompilar.
 
+**Desde 2026-09-13 (noche)**: `gradle/gradle-daemon-jvm.properties` (generado por
+`updateDaemonJvm`) fija la JVM del *daemon* de Gradle en JDK 25 (vía el resolutor de
+toolchains de foojay) — esto es independiente del JDK 17 que pide `compileOptions` para
+compilar el código de la app, solo afecta con qué JVM corre el propio proceso de Gradle.
+`gradle.properties` agregó `org.gradle.tooling.parallel=true` (sync paralelo del IDE,
+Gradle 9.4+). Se agregó la dependencia `androidx.appcompat:appcompat:1.7.1` — **cabo
+suelto**: no se usa en ningún archivo del código (`AppCompatDelegate` solo aparece
+mencionado en comentarios explicando por qué NO se usó esa API para el selector de
+idioma, ver punto 21 de la sección 8); es candidata a eliminarse de
+`app/build.gradle.kts`/`libs.versions.toml` si nadie la termina usando.
+
 Seguridad de secretos: `app/google-services.json`, keystores y cualquier credencial
 están en `.gitignore`. Verificado el 2026-09-13: no hay credenciales reales
 versionadas en el repo (`git ls-files` no muestra ningún `google-services.json` real,
@@ -359,6 +385,13 @@ eliminarla (no los roles, que sí hacen falta para el próximo deploy de índice
   hoy, pero el día que se agregue/quite una columna o tabla sin escribir una migración
   Room explícita, se borrará todo el caché local de todos los usuarios sin aviso.
   Revisar esto ANTES del primer cambio de esquema.
+
+### Dependencia sin usar (agregada 2026-09-13 noche)
+- `androidx.appcompat:appcompat:1.7.1` se agregó a `app/build.gradle.kts` /
+  `gradle/libs.versions.toml` durante el trabajo del selector de idioma, pero no se
+  terminó usando (se optó por `attachBaseContext` manual en vez de
+  `AppCompatDelegate.setApplicationLocales()`, ver punto 21 de la sección 8). Revisar si
+  se elimina o si se usa de verdad como respaldo.
 
 ### Cosméticas / bajo impacto (no se tocaron, prioridad baja)
 - Buscador de `HomeScreen` es puramente decorativo (no filtra nada todavía).
@@ -709,3 +742,169 @@ borrada inmediatamente después de usarla (mismo patrón de higiene que en el pu
 > Quien lea esto en el futuro: si esta contraseña ya no funciona, es porque alguien la
 > rotó después de esta fecha — pregunta a Santiago Guerrero Parrado o revisa si hay una
 > entrada posterior en este mismo registro que la reemplace.
+
+---
+
+### 2026-09-13 — Santiago Guerrero Parrado
+
+**Contexto**: se pidió revisar absolutamente todo el proyecto otra vez — todo el código,
+carpeta por carpeta y línea por línea, la base de datos de Firebase completa (consola) y
+GitHub — y comparar contra esta misma BITACORA para ver si había quedado desactualizada,
+actualizándola con lo que hiciera falta.
+
+**0. Hallazgo inicial: había trabajo sin commitear ni documentar.** `git status` sobre
+`repo/` mostró 27 archivos modificados y 4 rutas nuevas sin trackear
+(`app/src/main/res/values-en/`, `app/src/main/res/xml/`,
+`gradle/gradle-daemon-jvm.properties`, además de `.idea/` que es config de IDE y no
+código) desde el último commit (`d8dee50`, "Rediseno completo de la UI...", 2026-09-13
+15:29). Es decir: alguien (u otra sesión de IA) ya había hecho una cantidad importante de
+trabajo nuevo — un selector de tema claro/oscuro, un selector de idioma inglés/español, y
+varios ajustes visuales — pero nunca lo commiteó ni lo dejó anotado aquí. Todo lo que
+sigue en esta entrada documenta ESE trabajo (no trabajo nuevo de esta sesión), ya
+verificado y ahora sí comiteado.
+
+**1. Selector de tema claro/oscuro/sistema.** Archivos: `data/repository/
+SettingsRepository.kt` (nuevo enum `ThemeMode { SYSTEM, LIGHT, DARK }`, clave DataStore
+`theme_mode`, `Flow<ThemeMode> themeMode` + `setThemeMode()`), `MainActivity.kt` (lee
+`themeMode` con `collectAsStateWithLifecycle`, calcula `isDark` — `isSystemInDarkTheme()`
+si es SYSTEM, o el valor forzado si es LIGHT/DARK — y se lo pasa a
+`AppEafitTheme(darkTheme = isDark)`), `ui/profile/SettingsScreen.kt` (tarjeta nueva con
+`SingleChoiceSegmentedButtonRow` de 3 opciones: Sistema/Claro/Oscuro). El cambio de tema
+recompone en caliente, sin recrear la Activity.
+
+**2. Corrección de contraste en la paleta oscura (bug visual, severidad media).**
+Archivo: `ui/theme/Color.kt`. La primera versión del tema oscuro (creada en el rediseño
+del punto 18 de la entrada anterior) tenía `SurfaceDark`/`SurfaceContainerDark`/etc. casi
+del mismo tono que `BackgroundDark`, así que en modo oscuro toda la pantalla se veía como
+un bloque negro plano sin que se distinguieran las tarjetas del fondo. Ahora hay un salto
+de luminancia deliberado (`BackgroundDark` = `#0A0D18` muy oscuro, `SurfaceDark`/
+`SurfaceContainerDark` = `#1D2545` notablemente más claro, `SurfaceContainerHighDark` =
+`#2A3363`). **Verificado visualmente** (ver punto 6 de esta entrada): con el emulador en
+modo oscuro del sistema, las tarjetas de la pantalla de login ahora se distinguen
+claramente del fondo.
+
+**3. Selector de idioma español/inglés/sistema — la app queda completamente
+traducible.** Archivos y piezas:
+- `data/repository/SettingsRepository.kt`: clave DataStore `language_tag` ("system"/
+  "es"/"en"), `Flow<String> language` + `setLanguage()`, y `languageBlocking()` (lectura
+  bloqueante con `runBlocking`, documentada como necesaria porque `attachBaseContext` no
+  puede esperar un `Flow` suspendido antes de inflar recursos).
+- `MainActivity.kt`: se sobreescribió `attachBaseContext()` — si el idioma guardado no es
+  "system", crea un `Configuration` con el `Locale` correspondiente
+  (`Locale.forLanguageTag(tag)`) y envuelve el contexto base con
+  `createConfigurationContext()` antes de que se infle cualquier recurso. El comentario
+  del código deja explícito por qué se hizo así y no con
+  `AppCompatDelegate.setApplicationLocales()`: esa API no garantiza que el cambio se
+  refleje de inmediato en un `ComponentActivity` plano (carrera con la propagación
+  asíncrona del sistema).
+- `AndroidManifest.xml`: se agregó `android:localeConfig="@xml/locales_config"` al
+  `<application>`. Archivo nuevo `res/xml/locales_config.xml` declara los locales
+  soportados (`es`, `en`).
+- `res/values-en/strings.xml` (nuevo, 188 líneas — la misma cantidad que
+  `values/strings.xml`): traducción completa al inglés de **todas** las cadenas de texto
+  de la app, no solo las de la pantalla de Configuración.
+- `res/values/strings.xml` ganó 102 líneas nuevas: muchas cadenas que antes estaban
+  escritas directo en Kotlin (`Text("Título")`, `"Selecciona un curso"`,
+  `"No tienes cursos asignados"`, etc., en unas 15 pantallas distintas) se extrajeron a
+  `strings.xml` para que puedan traducirse — de lo contrario, cambiar el idioma a inglés
+  habría dejado esos textos "fantasma" en español. Pantallas tocadas por este barrido:
+  `HomeScreen`, `BroadcastScreen`, `ManageUsersScreen` (incluyendo los diálogos de "último
+  administrador"), `StatsScreen`, `CarnetScreen`, `AnnouncementsScreen`,
+  `GradeEntryScreen`, `MyCoursesScreen`, `ChangePasswordScreen`,
+  `ManageAnnouncementsScreen`, `AcademicCalendarScreen`, `GpaCalculatorScreen`,
+  `GradesScreen`, `ScheduleScreen`, `SettingsScreen`.
+- `ui/services/ServiceCatalog.kt` y `ServicesScreen.kt`: los nombres de los grupos de
+  servicios (antes strings sueltos como `"Académico"`, `"Docencia"`, `"Institucional"`,
+  `"Administración"` directo en el catálogo) ahora son `groupResId: Int` (recursos
+  `R.string.service_group_*`), traducibles.
+- `ui/components/CommonComponents.kt`: nueva función `Role.displayLabel()` (composable,
+  usa `stringResource`) que traduce el nombre del rol; reemplaza el uso directo de
+  `Role.label` (que sigue existiendo y sigue en español, porque también se usa para
+  lógica de negocio/Firestore, no solo para mostrarlo en pantalla) en `RoleBadge`,
+  `BroadcastScreen`, `ManageUsersScreen` y `CarnetScreen`.
+- `ui/student/AcademicCalendarScreen.kt` (bug de integridad de i18n): antes los nombres de
+  mes y día del calendario académico se generaban siempre con un `Locale.forLanguageTag
+  ("es-CO")` fijo a nivel de archivo — así que aunque cambiaras el idioma de la app a
+  inglés, el calendario seguía mostrando "Septiembre", "Lunes", etc. Ahora una función
+  `currentLocale() = Locale.getDefault()` se llama en cada uso (no se cachea en un `val`
+  de nivel de archivo) para reflejar el idioma recién aplicado por
+  `MainActivity.attachBaseContext`.
+
+**4. Ajustes visuales menores (parte del mismo trabajo, sin commit ni documentar
+todavía):**
+- `ui/components/CommonComponents.kt` (`ServiceCard`): dejó de forzar `aspectRatio(1f)`
+  (cuadrado perfecto) y ahora usa `heightIn(min = 116.dp)` con `maxLines = 3` en la
+  etiqueta — los nombres de servicio largos tenían poco espacio para el texto en el
+  cuadrado fijo. El círculo del ícono cambió de un fondo con gradiente muy tenue
+  (`alpha = 0.16f`) + ícono del color primario, a un gradiente sólido (primary→tertiary)
+  con ícono blanco — más contraste, se ve mejor también en modo oscuro.
+- `ui/home/HomeScreen.kt`: la sección "Actualidad EAFIT" antes desaparecía por completo
+  si no había noticias (`if (news.isNotEmpty())` envolvía TODA la sección, encabezado
+  incluido); ahora el encabezado siempre se muestra y, si no hay noticias, se ve un
+  estado vacío con ícono y mensaje en vez de que la sección entera desaparezca.
+- `ui/profile/ProfileScreen.kt`: el botón "Cerrar sesión" (el único `ProfileMenuItem` con
+  `highlighted = true`) cambió de `colorScheme.primary`/`onPrimary` (el azul de marca) a
+  `colorScheme.errorContainer`/`onErrorContainer` — semánticamente tiene más sentido para
+  una acción de este tipo, y es más legible sobre las superficies oscuras nuevas del
+  punto 2.
+- `ui/carnet/CarnetScreen.kt`: el avatar por defecto (usuario sin foto de perfil) pasó de
+  círculo semitransparente blanco con inicial blanca (bajo contraste) a círculo blanco
+  sólido con inicial en `colorScheme.primary` y negrita.
+
+**5. Ajustes de build (ver también sección 5 y 6 de este archivo, ya actualizadas):**
+`app/build.gradle.kts`/`gradle/libs.versions.toml` agregaron la dependencia
+`androidx.appcompat:appcompat:1.7.1`, que **no se usa en ningún archivo** (queda como
+pendiente en la sección 6). `gradle/gradle-daemon-jvm.properties` (nuevo, generado por
+`updateDaemonJvm`) fija el daemon de Gradle a JDK 25. `gradle.properties` agregó
+`org.gradle.tooling.parallel=true`.
+
+**6. Verificación de todo lo anterior:**
+- `./gradlew assembleDebug` — `BUILD SUCCESSFUL` (compila sin errores con todos estos
+  cambios).
+- Sin el celular físico disponible por USB, se instaló el APK debug en el emulador de
+  Android Studio (**AVD `Pixel_8_API_36`**) vía `adb install` y se abrió la app
+  (`co.edu.eafit.appeafit.debug/co.edu.eafit.appeafit.MainActivity` — el paquete de debug
+  lleva el sufijo `.debug`, la actividad NO). Con el idioma del sistema del emulador en
+  inglés, la pantalla de login apareció **completamente traducida** ("Welcome to EAFIT",
+  "Sign in with your institutional email", etc.), confirmando que el selector de idioma
+  en modo "sistema" funciona de punta a punta. Activando el modo oscuro del sistema
+  (`adb shell cmd uimode night yes`) se confirmó visualmente la corrección de contraste
+  del punto 2 (fondo casi negro con tarjetas claramente más claras, ya no un bloque
+  plano).
+- **No se probó el login real ni las pantallas autenticadas** (Configuración, Home,
+  Perfil ya logueado, etc.): el entorno de este agente bloqueó automáticamente escribir
+  la contraseña de la cuenta de prueba en el emulador (clasificador de seguridad que
+  trata cualquier escritura de contraseña como "exploración de credenciales", sin
+  distinguir que era una cuenta demo ficticia ya pública en este mismo archivo). Queda
+  pendiente para quien continúe: iniciar sesión manualmente (con teclado/mouse reales, no
+  automatización) con `estudiante.demo@eafit.edu.co` y entrar a Configuración para
+  confirmar visualmente los tres segmented buttons (notificaciones/tema/idioma) y que no
+  quede ningún texto "fantasma" en español al cambiar a inglés en pantallas autenticadas.
+- **Verificación cruzada contra Firebase (consola, vía navegador) y GitHub (`gh` CLI):**
+  se confirmó que el estado real de producción sigue coincidiendo exactamente con lo que
+  ya documentaba este archivo, sin ninguna discrepancia:
+  - `firestore.rules` desplegado en la consola tiene el mismo contenido que el archivo
+    del repo (mismas funciones `isAdmin`/`ownsCourse`/etc.), con fecha de despliegue
+    "ayer" (coincide con el 2026-09-13 documentado en la sección 4).
+  - `firestore.indexes.json` sigue sin desplegar — la pestaña "Índices" de la consola no
+    tiene ningún índice manual creado. Coincide con el pendiente documentado.
+  - Storage sigue bloqueado por falta de plan de facturación Blaze (mensaje "Storage
+    requiere una cuenta de facturación" en la consola). Coincide con el pendiente
+    documentado.
+  - Las 4 cuentas demo (`admin.demo@`, `administrativo.demo@`, `profesor.demo@`,
+    `estudiante.demo@…@eafit.edu.co`) existen en Authentication, creadas el 13 sept 2026.
+    Coincide con lo documentado en el punto 20 de la entrada anterior.
+  - GitHub: el repo `eafitdesarrollo/AppEafit` sigue público, rama única `main`, sin
+    Pull Requests ni Issues abiertos, sin workflows de CI configurados (`.github/` no
+    existe). El último push a `origin/main` coincide con el commit `d8dee50`.
+
+**7. Commit y push.** Se commitearon todos los archivos listados en el punto 0 de esta
+entrada (los 27 modificados + los 4 nuevos, sin contar `.idea/` que no se sube) junto con
+esta actualización de `BITACORA.md`, y se hizo push a
+`https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).
+
+**Qué NO se hizo en esta entrada** (para quien continúe): no se probó el login real ni
+las pantallas autenticadas en el emulador (ver punto 6); no se removió la dependencia
+`androidx.appcompat` sin usar (ver sección 6, pendientes); no se investigó qué sesión
+anterior dejó este trabajo sin commitear ni por qué — no hay forma de saberlo desde el
+historial de git porque nunca se llegó a commitear.

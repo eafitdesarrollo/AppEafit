@@ -77,11 +77,11 @@ fun ManageAnnouncementsScreen(container: AppContainer, authorId: String, onBack:
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showDialog = true }) { Icon(Icons.Filled.Add, contentDescription = "Nuevo anuncio") }
+            FloatingActionButton(onClick = { showDialog = true }) { Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.manage_announcements_new)) }
         }
     ) { padding ->
         if (news.isEmpty()) {
-            EmptyState(message = "No hay anuncios publicados", icon = Icons.Filled.Campaign, modifier = Modifier.padding(padding))
+            EmptyState(message = stringResource(R.string.manage_announcements_empty), icon = Icons.Filled.Campaign, modifier = Modifier.padding(padding))
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -138,12 +138,12 @@ fun ManageAnnouncementsScreen(container: AppContainer, authorId: String, onBack:
         var body by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Nuevo anuncio") },
+            title = { Text(stringResource(R.string.manage_announcements_new)) },
             text = {
                 Column {
-                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título") }, singleLine = true)
-                    OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoría") }, singleLine = true)
-                    OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text("Contenido") })
+                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.broadcast_title_label)) }, singleLine = true)
+                    OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text(stringResource(R.string.manage_announcements_category)) }, singleLine = true)
+                    OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text(stringResource(R.string.manage_announcements_content)) })
                 }
             },
             confirmButton = {

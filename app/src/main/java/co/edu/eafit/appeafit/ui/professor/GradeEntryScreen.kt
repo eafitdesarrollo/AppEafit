@@ -78,7 +78,7 @@ fun GradeEntryScreen(container: AppContainer, professorId: String, onBack: () ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Box {
                 OutlinedButton(onClick = { courseMenuExpanded = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(selectedCourse?.name ?: "Selecciona un curso", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(selectedCourse?.name ?: stringResource(R.string.grade_entry_select_course), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 DropdownMenu(expanded = courseMenuExpanded, onDismissRequest = { courseMenuExpanded = false }) {
                     courses.forEach { course ->
@@ -92,7 +92,7 @@ fun GradeEntryScreen(container: AppContainer, professorId: String, onBack: () ->
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
             Box {
                 OutlinedButton(onClick = { studentMenuExpanded = true }, modifier = Modifier.fillMaxWidth(), enabled = students.isNotEmpty()) {
-                    Text(selectedStudent?.fullName ?: "Selecciona un estudiante", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(selectedStudent?.fullName ?: stringResource(R.string.grade_entry_select_student), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 DropdownMenu(expanded = studentMenuExpanded, onDismissRequest = { studentMenuExpanded = false }) {
                     students.forEach { student ->
@@ -104,32 +104,32 @@ fun GradeEntryScreen(container: AppContainer, professorId: String, onBack: () ->
                 }
             }
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
-            OutlinedTextField(value = item, onValueChange = { item = it }, label = { Text("Nombre de la evaluación") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = item, onValueChange = { item = it }, label = { Text(stringResource(R.string.grade_entry_item_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
             OutlinedTextField(
                 value = score, onValueChange = { score = it },
-                label = { Text("Nota obtenida") }, singleLine = true,
+                label = { Text(stringResource(R.string.grade_entry_score)) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
             OutlinedTextField(
                 value = maxScore, onValueChange = { maxScore = it },
-                label = { Text("Nota máxima") }, singleLine = true,
+                label = { Text(stringResource(R.string.grade_entry_max_score)) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
             OutlinedTextField(
                 value = weight, onValueChange = { weight = it },
-                label = { Text("Porcentaje que vale (%)") }, singleLine = true,
+                label = { Text(stringResource(R.string.grade_entry_weight)) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
 
             androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 20.dp))
             EafitButton(
-                text = if (saved) "Nota guardada ✓" else "Guardar nota",
+                text = if (saved) stringResource(R.string.grade_entry_saved) else stringResource(R.string.grade_entry_save),
                 onClick = {
                     val course = selectedCourse ?: return@EafitButton
                     val student = selectedStudent ?: return@EafitButton

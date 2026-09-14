@@ -28,13 +28,16 @@ val OutlineLight = Color(0xFFDCE1EC)
 val TextSecondaryLight = Color(0xFF5B6270)
 
 // ---- Superficies (dark) ----
-val SurfaceDark = Color(0xFF11162B)
-val SurfaceContainerLowDark = Color(0xFF0D1224)
-val SurfaceContainerDark = Color(0xFF171D38)
-val SurfaceContainerHighDark = Color(0xFF212949)
-val BackgroundDark = Color(0xFF080B18)
-val OutlineDark = Color(0xFF333C63)
-val TextSecondaryDark = Color(0xFFAAB2CC)
+// OJO: en la primera versión estos tonos quedaban casi idénticos al fondo (todo se veía
+// "un bloque negro plano" — el problema #1 reportado). Ahora hay un salto de luminancia
+// grande y deliberado entre background y las superficies de tarjeta.
+val BackgroundDark = Color(0xFF0A0D18)
+val SurfaceContainerLowDark = Color(0xFF141936)
+val SurfaceDark = Color(0xFF1D2545)
+val SurfaceContainerDark = Color(0xFF1D2545)
+val SurfaceContainerHighDark = Color(0xFF2A3363)
+val OutlineDark = Color(0xFF454F82)
+val TextSecondaryDark = Color(0xFFB7BFDD)
 
 // ---- Acentos de rol (badges) ----
 val RoleStudent = Color(0xFF146AEF)

@@ -104,7 +104,7 @@ fun ScheduleScreen(container: AppContainer, studentId: String, onBack: () -> Uni
                                                 tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.padding(end = 4.dp).size(18.dp)
                                             )
-                                            Text("Virtual", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                            Text(stringResource(R.string.virtual_indicator), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                                         }
                                     }
                                 }
