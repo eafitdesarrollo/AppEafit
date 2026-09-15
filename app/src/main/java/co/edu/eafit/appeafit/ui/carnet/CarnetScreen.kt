@@ -46,7 +46,7 @@ fun CarnetScreen(user: User) {
     }
     val qrVisible = remember(user.uid) { MutableTransitionState(false).apply { targetState = true } }
 
-    GradientHeroBox(modifier = Modifier.fillMaxSize()) {
+    GradientHeroBox(modifier = Modifier.fillMaxSize(), dripBottom = false) {
     Column(
         modifier = Modifier
             .fillMaxSize()

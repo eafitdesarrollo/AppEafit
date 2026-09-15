@@ -48,7 +48,7 @@ fun SplashScreen() {
         label = "ringAlpha"
     )
 
-    GradientHeroBox(modifier = Modifier.fillMaxSize()) {
+    GradientHeroBox(modifier = Modifier.fillMaxSize(), dripBottom = false) {
         Column(
             modifier = Modifier
                 .align(Alignment.Center)

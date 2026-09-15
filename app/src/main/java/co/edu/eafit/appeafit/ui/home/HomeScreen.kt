@@ -65,7 +65,9 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    // bottom > top: deja espacio para que el borde de goteo (DripShape)
+                    // de GradientHeroBox no corte el texto del saludo.
+                    .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 40.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {

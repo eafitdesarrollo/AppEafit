@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -57,10 +58,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.domain.model.Role
+import co.edu.eafit.appeafit.ui.theme.DripShape
 import co.edu.eafit.appeafit.ui.theme.EafitMotion
 import co.edu.eafit.appeafit.ui.theme.RoleAdmin
 import co.edu.eafit.appeafit.ui.theme.RoleProfessor
@@ -261,16 +264,23 @@ fun EafitOutlinedButton(
     }
 }
 
-/** Caja "hero" con el degradé de marca — reemplaza los Box(color = navy) repetidos
- * en login/splash/carnet/home por un único componente consistente. */
+/** Caja "hero" con el degradé de marca y un borde inferior "derretido" (goterones, ver
+ * [DripShape]) — reemplaza los Box(color = navy) repetidos en login/splash/carnet/home
+ * por un único componente consistente. `dripBottom` aplica el borde de goteo (en vez de
+ * un corte recto) para que la cabecera no termine en una línea cuadrada contra el fondo
+ * de debajo; ponlo en `false` en pantallas donde el hero ocupa el 100% de la pantalla y
+ * el goteo quedaría pegado al borde físico del dispositivo, como el splash. */
 @Composable
 fun GradientHeroBox(
     modifier: Modifier = Modifier,
+    dripBottom: Boolean = true,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val shape = if (dripBottom) DripShape() else RectangleShape
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .clip(shape)
             .background(co.edu.eafit.appeafit.ui.theme.GradientHero)
     ) { content() }
 }

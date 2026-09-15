@@ -1019,3 +1019,63 @@ ninguna funcionalidad.
 
 **Commit y push**: cambio commiteado y subido a
 `https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).
+
+---
+
+### 2026-09-15 — Santiago Guerrero Parrado
+
+**26. Rediseño del borde de las cabeceras "hero" a un efecto de "pintura derritiéndose"
+(goterones), y esquinas redondeadas en la barra de navegación inferior.** Pedido
+explícito de Santiago Guerrero Parrado: la app se seguía viendo "muy cuadrada" incluso
+después del rediseño del punto 18 (entrada del 2026-09-13) — el corte recto de las
+cabeceras y la barra de navegación inferior era el problema. Se pidió específicamente un
+efecto de "que se derritiera el color principal sobre otro" con una imagen de referencia
+(un borde de pintura azul goteando), aclarando que debía mantenerse la paleta de EAFIT
+(no colores nuevos) y que era la SILUETA del borde la que debía cambiar, no un fondo con
+manchas de color de otros tonos (primer intento descartado, ver abajo).
+
+- **Archivo nuevo `ui/theme/DripShape.kt`**: clase `DripShape` que implementa `Shape`
+  (`createOutline`) — genera un `Path` con `dripCount` (7 por defecto) goterones
+  redondeados de largo variable (patrón fijo `dripDepthPattern`, no aleatorio, para que el
+  resultado sea siempre igual) colgando de un borde inferior, usando curvas Bézier
+  cúbicas (`cubicTo`) para que cada goterón termine en punta redondeada, no en pico. El
+  tamaño del "zona de goteo" (`dripZoneHeight`, 32.dp por defecto) es una medida fija en
+  dp, no un porcentaje del alto total, para que se vea igual de grande en una cabecera
+  corta (Home) que en una pantalla completa (Splash/Carnet).
+- **`ui/components/CommonComponents.kt` (`GradientHeroBox`)**: el parámetro
+  `roundedBottom: Boolean` (que aplicaba una esquina simplemente redondeada,
+  `RoundedCornerShape`) se reemplazó por `dripBottom: Boolean` que aplica `DripShape()`
+  en vez de un corte recto (`RectangleShape`) — usado por defecto en `LoginScreen` y
+  `HomeScreen`. `SplashScreen.kt` y `CarnetScreen.kt` pasan `dripBottom = false` porque su
+  `GradientHeroBox` ocupa el 100% de la pantalla (no hay "fondo claro" debajo contra el
+  cual goteé, se vería como un hueco pegado al borde físico del dispositivo).
+- **`ui/home/HomeScreen.kt`**: el `Row` de la cabecera (saludo + campana de
+  notificaciones) tenía solo `padding(vertical = 16.dp)`, insuficiente para que los
+  goterones de 32dp no cortaran el texto "Estudiante" — se cambió a
+  `padding(start=20.dp, end=20.dp, top=16.dp, bottom=40.dp)` para darle aire al borde de
+  goteo. **Verificado visualmente en el emulador** que ya no hay texto cortado.
+- **`ui/components/EafitBottomBar.kt`**: la `NavigationBar` (M3, rectángulo plano por
+  defecto) ahora tiene `Modifier.clip(RoundedCornerShape(topStart=24.dp, topEnd=24.dp))` —
+  mismo pedido de "que no se vea cuadrado" aplicado a la barra inferior, con un
+  tratamiento más sutil (esquinas redondeadas, no goteo, porque la barra es demasiado
+  corta en alto para un goteo legible).
+- **Intento descartado (parte de esta misma tarea, revertido antes de commitear)**: la
+  primera versión de este cambio usaba un fondo de "blobs" (manchas orgánicas con
+  gradiente radial y `BlendMode.Screen`, en un archivo `ui/theme/MeltingBackground.kt`
+  que se llegó a compilar y probar) en colores cian/coral/ámbar detrás del contenido de
+  `GradientHeroBox`, en vez de cambiar la silueta del borde. Santiago Guerrero Parrado
+  aclaró que no era eso lo que pedía (colores fuera de la paleta EAFIT y un efecto de
+  "manchas" en vez de "goteo de borde"), así que ese archivo se borró por completo y se
+  reemplazó por el enfoque de `DripShape` de arriba — no quedó ningún rastro de la
+  primera versión en el código ni en este commit.
+
+**Verificación**: `./gradlew compileDebugKotlin`/`assembleDebug` exitosos en cada
+iteración. Instalado en el emulador `Pixel_8_API_36` (sin celular físico conectado):
+confirmado visualmente que Login y Home muestran el borde de goteo en los azules de EAFIT
+(navy → azul, igual que `GradientHero`) sin cortar ningún texto, que Splash y Carnet
+siguen con corte recto (sin goteo, como corresponde a pantalla completa), y que la barra
+de navegación inferior tiene las esquinas superiores redondeadas. Se hizo login real con
+la cuenta demo de estudiante para verificar Home con sesión iniciada.
+
+**Commit y push**: cambios commiteados y subidos a
+`https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).
