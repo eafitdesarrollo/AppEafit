@@ -381,10 +381,14 @@ eliminarla (no los roles, que sí hacen falta para el próximo deploy de índice
   TODOS los estudiantes, no solo los matriculados en ese curso. Arreglarlo bien
   requiere agregar un `courseId` opcional a `NewsItem`/Firestore y filtrar en
   `HomeViewModel`/`NewsRepository` cruzando contra las matrículas del estudiante.
-- **`fallbackToDestructiveMigration`** en `AppDatabase.kt` desde la v1: no es un bug
-  hoy, pero el día que se agregue/quite una columna o tabla sin escribir una migración
-  Room explícita, se borrará todo el caché local de todos los usuarios sin aviso.
-  Revisar esto ANTES del primer cambio de esquema.
+- **`fallbackToDestructiveMigration`** en `AppDatabase.kt`: sigue sin haber ninguna
+  migración Room explícita escrita. Ya se ejerció una vez este camino (v1 → v2 el
+  2026-09-15, al agregar `CachedGradeEntity.corte` — ver punto 27 de la sección 8) sin
+  problema porque el proyecto todavía no tiene usuarios reales con datos que importe
+  preservar. La próxima vez que se agregue/quite una columna o tabla, se volverá a
+  borrar todo el caché local de todos los usuarios sin aviso — si para ese momento ya
+  hay usuarios reales, esto ya no será aceptable y hay que escribir una migración
+  explícita en vez de confiar en el fallback destructivo.
 
 ### Dependencia sin usar (agregada 2026-09-13 noche)
 - `androidx.appcompat:appcompat:1.7.1` se agregó a `app/build.gradle.kts` /
@@ -392,19 +396,6 @@ eliminarla (no los roles, que sí hacen falta para el próximo deploy de índice
   terminó usando (se optó por `attachBaseContext` manual en vez de
   `AppCompatDelegate.setApplicationLocales()`, ver punto 21 de la sección 8). Revisar si
   se elimina o si se usa de verdad como respaldo.
-
-### Datos huérfanos en Firestore de producción (hallado 2026-09-13 noche, ver punto 22)
-- Las colecciones `lostItems` (1 documento, "audífonos") y `spaces` (2 documentos,
-  "Auditorio 2" y otro) **siguen existiendo en la base de datos real** (`appeafit-297d5`)
-  a pesar de que la sección 1 y el punto 18 de la sección 8 afirman que "objetos
-  perdidos" y "reserva de espacios" se eliminaron por completo, código + Firestore. Lo
-  que se eliminó completo fue el código y las reglas (confirmado: `firestore.rules` ya
-  no menciona esas colecciones); los documentos que ya existían antes de esa eliminación
-  simplemente quedaron huérfanos, inaccesibles desde la app (sin reglas que los permitan)
-  pero visibles en la consola. Borrarlos manualmente en
-  `https://console.firebase.google.com/project/appeafit-297d5/firestore` (colecciones
-  `lostItems` y `spaces`) es solo limpieza cosmética, sin ningún riesgo de seguridad ni
-  urgencia.
 
 ### Cosméticas / bajo impacto (no se tocaron, prioridad baja)
 - Buscador de `HomeScreen` es puramente decorativo (no filtra nada todavía).
@@ -1076,6 +1067,152 @@ confirmado visualmente que Login y Home muestran el borde de goteo en los azules
 siguen con corte recto (sin goteo, como corresponde a pantalla completa), y que la barra
 de navegación inferior tiene las esquinas superiores redondeadas. Se hizo login real con
 la cuenta demo de estudiante para verificar Home con sesión iniciada.
+
+**Commit y push**: cambios commiteados y subidos a
+`https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).
+
+---
+
+### 2026-09-15 — Santiago Guerrero Parrado
+
+**27. Calculadora de promedio rediseñada como simulador de notas reales por corte, y
+publicación de notas por corte para el profesor.** Pedido explícito de Santiago Guerrero
+Parrado con una captura de referencia: la calculadora debía dejar de ser una tabla manual
+desconectada de los datos reales y pasar a mostrar las materias en las que el estudiante
+está inscrito de verdad, con las notas de cada corte (1, 2, 3) que el profesor ya
+publicó, permitiendo simular ediciones sin perder de vista el dato real.
+
+- **Modelo de datos — nuevo campo `corte`.** `domain/model/Grade.kt` agregó
+  `val corte: Int = 0` (0 = nota sin corte, compatibilidad con notas viejas del modelo
+  libre de ítems). Se propagó a `data/local/entity/Entities.kt`
+  (`CachedGradeEntity.corte`), `data/repository/FirestoreMappers.kt` (`toGrade()`/
+  `toMap()`, usando `getLong("corte")` porque Firestore guarda los enteros como Long) y
+  `data/repository/GradeRepository.kt` (`toDomain()`/`toEntity()`).
+- **Cambio de esquema de Room — versión 2.** `data/local/AppDatabase.kt`: `version = 1`
+  → `2`. Sin migración explícita: `fallbackToDestructiveMigration(true)` borra y recrea
+  el caché local completo (de TODOS los repos, no solo notas) en el primer arranque tras
+  actualizar — cada repositorio se re-sincroniza solo desde Firestore en su próximo
+  `refresh()`, así que no hay pérdida de datos reales, solo un refresh extra la primera
+  vez. Este es exactamente el escenario que la sección 6 llevaba desde el 2026-09-13
+  marcado como "revisar ANTES del primer cambio de esquema" — ya revisado y aceptado.
+- **`ui/student/GpaCalculatorViewModel.kt` (nuevo).** Combina
+  `courseRepository.observeCachedForStudent` + `gradeRepository.observeCachedForStudent`
+  y arma `CourseGradeRow(course, realCortes: Map<Int, Double>)` por materia — si el
+  profesor publicó el mismo corte más de una vez (corrección), gana la nota más reciente
+  por `date`. Dispara `refreshForStudent` de ambos repos en `init`, mismo patrón que
+  `GradesViewModel`.
+- **`ui/student/GpaCalculatorScreen.kt` (reescrita por completo).** Header
+  `GradientHeroBox` con foto/nombre/programa del estudiante + insignia "SIMULADOR DE
+  NOTAS"; por cada materia inscrita, una tarjeta con casillas C1/C2/C3 editables
+  (`TextField` filled, sin borde) y un panel lateral "Nota final". El FAB, que antes era
+  un "+" para agregar materias manuales, ahora es un bote de basura (`Icons.Filled
+  .Delete`) que descarta cualquier simulación y vuelve a mostrar solo lo publicado.
+  - **Simulación vs. dato real**: cada casilla se identifica por clave
+    `"courseId:corte"`. Un `Set<String>` (`editedKeys`) registra qué casillas tocó el
+    estudiante a mano — esas nunca se vuelven a pisar con el valor real que llegue
+    después (Firestore es async: la primera emisión de la lista de materias casi
+    siempre llega con las notas todavía vacías, antes de que termine el refresh). Las
+    casillas NO editadas sí se mantienen sincronizadas con el valor real más reciente. El
+    botón de reset limpia `editedKeys` y las casillas, y vuelve a sincronizar con lo real.
+  - **Cuándo se muestra "Nota final" y "Promedio semestre"** (corregido en vivo probando
+    en el celular físico, pedido explícito de Santiago Guerrero Parrado viéndolo
+    funcionar): "Nota final" de una materia solo aparece cuando los **3** cortes tienen
+    valor (real o simulado) — con 1 o 2 cortes llenos se muestra "—", no un promedio
+    parcial. "Promedio semestre" solo aparece cuando **todas** las materias inscritas ya
+    tienen su Nota final calculada (las 3 casillas llenas cada una) — si falta una sola
+    materia, también muestra "—". Cuando sí se muestra, es un promedio ponderado por los
+    créditos (`Course.credits`) de cada materia sobre el total de créditos de las
+    materias que entran en la cuenta — mismo criterio de ponderación que
+    `GradesViewModel.overallAverage` (documentado en el punto 5 del 2026-09-13).
+- **`ui/professor/GradeEntryScreen.kt` (simplificada).** Se quitaron los campos libres
+  `item` (nombre de la evaluación), `maxScore` y `weight`% — ahora el profesor elige el
+  **corte** (1/2/3) con un `SingleChoiceSegmentedButtonRow` (mismo patrón visual que
+  Configuración) en vez de escribir el nombre de la actividad a mano. Al guardar,
+  `maxScore` queda fijo en `5.0` (escala EAFIT) y `weightPercent` en `100.0/3` (los 3
+  cortes pesan igual) — no se le pide al profesor porque ninguna pantalla necesita
+  mostrarlo hoy. `item` se sigue guardando como "Corte 1"/"Corte 2"/"Corte 3" para que
+  `GradesScreen` (notas reales del estudiante) siga funcionando sin cambios.
+- **`ui/navigation/StudentNavGraph.kt`**: `GpaCalculatorScreen` ahora recibe
+  `container` y `user` (antes solo `onBack`), necesarios para el ViewModel y el header.
+- **Strings**: se agregaron/quitaron claves en `values/strings.xml` y `values-en/
+  strings.xml` en paralelo (siguen con la misma cantidad de líneas/claves, 136 cada uno)
+  — nuevas: `gpa_semester_average`, `gpa_final_grade`, `gpa_simulator_badge`,
+  `gpa_reset_simulation`, `gpa_empty_no_courses`, `grade_cut_short`,
+  `grade_entry_cut_title/desc/1/2/3`. Se quitaron las viejas de la calculadora manual
+  (`gpa_subject`, `gpa_credits_abbrev`, `gpa_grade`, `gpa_add_subject`,
+  `gpa_weighted_average`) y de `GradeEntryScreen` (`grade_entry_item_name`,
+  `grade_entry_max_score`, `grade_entry_weight`).
+
+**28. Dos bugs encontrados probando en el celular físico real (no en emulador) — ambos
+corregidos antes de dar la función por terminada:**
+- **Las casillas nunca mostraban las notas reales publicadas.** Causa: la sincronización
+  inicial (`syncDefaults`) solo rellenaba una casilla la primera vez que existía su
+  clave, con el objetivo de no pisar una edición del estudiante — pero como la primera
+  emisión de la lista de materias casi siempre llega ANTES de que el refresh de
+  Firestore traiga las notas, esa primera sincronización rellenaba todo con `""`, y la
+  segunda emisión (con las notas reales) ya no volvía a escribir porque la clave "ya
+  existía". Arreglado separando "casilla con valor por defecto" de "casilla editada a
+  mano" (`editedKeys`, ver punto 27).
+- **"Nota final"/"Promedio semestre" nunca calculaban nada aunque las casillas sí
+  mostraran texto.** Causa: `formatGrade()` usaba `Locale.getDefault()` — en un celular
+  con locale español (Colombia) eso escribe "3,8" con **coma** decimal, pero
+  `String.toDoubleOrNull()` de Kotlin solo entiende **punto**, así que el parseo fallaba
+  siempre y `notaFinal()` devolvía `null` sin importar qué hubiera escrito en las
+  casillas. Arreglado: `formatGrade()` pasó a usar `Locale.US` (punto, consistente sin
+  importar el idioma del teléfono) y se agregó `parseGrade()`, que normaliza `,` → `.`
+  antes de parsear (por si el teclado decimal del usuario también escribe coma).
+
+**29. Limpieza a fondo de datos huérfanos en Firestore de producción, más datos de
+prueba nuevos.** Pedido explícito de Santiago Guerrero Parrado ("si algo se borra o deja
+de existir debe dejar de existir por completo en la base de datos") al ver que una
+matrícula de prueba apuntaba a un UID de una cuenta demo que ya no existe (las cuentas
+demo se recrearon con UIDs nuevos el 2026-09-13, punto 20 — eso dejó huérfanas varias
+referencias viejas que nunca se habían revisado a fondo). Encontrado y corregido, todo
+vía la consola de Firebase (sin generar clave de cuenta de servicio — ver más abajo):
+  - `courses/demo-course-moviles.professorId` apuntaba a un UID de profesor que ya no
+    existe — corregido al UID real de `profesor.demo`.
+  - `enrollments/demo-enrollment-1.studentId` apuntaba a un UID de estudiante que ya no
+    existe — el documento se **borró por completo** (no se editó in place) y se creó uno
+    nuevo con el UID real de `estudiante.demo`.
+  - Los 3 documentos de `attendance` (mismo curso) y el único documento de
+    `teacherEvaluations` tenían el mismo `studentId` huérfano, además de datos de
+    prueba de mala calidad (`date: "snfnnf"`, `comment: "."`) — se borraron los 4
+    documentos por completo en vez de corregirlos.
+  - Se creó un segundo curso de prueba, **`demo-course-algebra`** ("Álgebra Lineal",
+    `MA101`, 3 créditos, profesor real), su matrícula para `estudiante.demo`, y 3 notas
+    de corte reales: Álgebra Corte 1 = 3.8; Móviles Corte 1 = 4.2, Corte 2 = 4.5 (Corte 3
+    de ambas materias se dejó sin publicar a propósito, para poder probar el simulador
+    con datos parcialmente completos).
+  - **Regla nueva para el futuro (dejar constancia explícita, pedido de Santiago
+    Guerrero Parrado):** toda función de borrado que ya exista o que se agregue en el
+    futuro en este proyecto debe borrar POR COMPLETO el dato de la base de datos —
+    nunca dejar una referencia huérfana a medio borrar. Antes de dar por terminada
+    cualquier función nueva de "eliminar algo", revisar explícitamente qué otras
+    colecciones podrían referenciar ese id (studentId/courseId/professorId/etc.) y
+    limpiarlas también, o documentar por qué no hace falta. **Auditoría de hoy**: las
+    únicas dos funciones de borrado que existen hoy en el código
+    (`NewsRepository.delete()` para anuncios, y `AuthRepository.deleteCurrentAccount()`
+    para el rollback de registro fallido) ya son completas — ninguna otra colección
+    referencia un `news/{id}` por id, y `deleteCurrentAccount()` se llama antes de que
+    exista ningún dato dependiente del uid nuevo. No hace falta tocar código hoy; esta
+    regla queda para la próxima vez que se agregue una función de borrado real (por
+    ejemplo, si en el futuro se agrega borrar un curso o desactivar/eliminar un usuario
+    de verdad desde `ManageUsersScreen`, que hoy solo desactiva/cambia rol).
+  - **Nota de higiene de credenciales**: para esta limpieza NO se generó ninguna clave
+    de cuenta de servicio nueva — el clasificador de seguridad del entorno bloqueó
+    automáticamente el intento de revisar/depurar las claves de servicio existentes en
+    IAM (ver sección 6, "Seguimiento de seguridad", pendiente sin resolver: las 4 claves
+    viejas de sesiones anteriores siguen sin revocar). Todo lo de este punto se hizo con
+    ediciones normales de datos vía la consola de Firestore, no credenciales.
+
+**Verificación**: `./gradlew compileDebugKotlin`/`assembleDebug` exitosos en cada
+iteración. Probado de punta a punta en el **celular físico real** (Oppo/OnePlus
+CPH2579, sin emulador): login real como `estudiante.demo`, calculadora de promedio
+mostrando las 2 materias reales con sus cortes publicados, simulación en vivo (escribir
+en una casilla vacía actualiza "Nota final"/"Promedio semestre" al instante), botón de
+reset descartando la simulación y devolviendo los valores reales; login real como
+`profesor.demo`, publicación de una nota de Corte 3 para Álgebra Lineal desde
+`GradeEntryScreen` con el resultado "Nota guardada ✓".
 
 **Commit y push**: cambios commiteados y subidos a
 `https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).

@@ -17,11 +17,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,6 +46,11 @@ import co.edu.eafit.appeafit.domain.model.User
 import co.edu.eafit.appeafit.ui.components.EafitButton
 import kotlinx.coroutines.launch
 
+/** Peso igual para los 3 cortes (33.33% cada uno) — no se le pide al profesor porque
+ * ninguna pantalla necesita mostrarlo hoy; ver GpaCalculatorViewModel/GradesViewModel,
+ * que promedian por corte, no por peso libre, desde el pedido del 2026-09-15. */
+private const val EQUAL_CUT_WEIGHT = 100.0 / 3
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GradeEntryScreen(container: AppContainer, professorId: String, onBack: () -> Unit) {
@@ -54,11 +63,15 @@ fun GradeEntryScreen(container: AppContainer, professorId: String, onBack: () ->
     var students by remember { mutableStateOf<List<User>>(emptyList()) }
     var selectedStudent by remember { mutableStateOf<User?>(null) }
     var studentMenuExpanded by remember { mutableStateOf(false) }
-    var item by remember { mutableStateOf("") }
+    var selectedCut by remember { mutableIntStateOf(1) }
     var score by remember { mutableStateOf("") }
-    var maxScore by remember { mutableStateOf("5") }
-    var weight by remember { mutableStateOf("") }
     var saved by remember { mutableStateOf(false) }
+
+    val cutLabels = listOf(
+        stringResource(R.string.grade_entry_cut_1),
+        stringResource(R.string.grade_entry_cut_2),
+        stringResource(R.string.grade_entry_cut_3)
+    )
 
     LaunchedEffect(selectedCourse) {
         val course = selectedCourse ?: return@LaunchedEffect
@@ -103,26 +116,31 @@ fun GradeEntryScreen(container: AppContainer, professorId: String, onBack: () ->
                     }
                 }
             }
-            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
-            OutlinedTextField(value = item, onValueChange = { item = it }, label = { Text(stringResource(R.string.grade_entry_item_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
+
+            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 20.dp))
+            Text(stringResource(R.string.grade_entry_cut_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.grade_entry_cut_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 8.dp))
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                cutLabels.forEachIndexed { index, label ->
+                    val cut = index + 1
+                    SegmentedButton(
+                        selected = selectedCut == cut,
+                        onClick = { selectedCut = cut; saved = false },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = cutLabels.size),
+                        label = { Text(label) }
+                    )
+                }
+            }
+
+            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 20.dp))
             OutlinedTextField(
-                value = score, onValueChange = { score = it },
+                value = score, onValueChange = { score = it; saved = false },
                 label = { Text(stringResource(R.string.grade_entry_score)) }, singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
-            OutlinedTextField(
-                value = maxScore, onValueChange = { maxScore = it },
-                label = { Text(stringResource(R.string.grade_entry_max_score)) }, singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
-            )
-            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
-            OutlinedTextField(
-                value = weight, onValueChange = { weight = it },
-                label = { Text(stringResource(R.string.grade_entry_weight)) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -139,18 +157,19 @@ fun GradeEntryScreen(container: AppContainer, professorId: String, onBack: () ->
                                 studentId = student.uid,
                                 courseId = course.id,
                                 courseName = course.name,
-                                item = item,
+                                item = cutLabels[selectedCut - 1],
                                 score = score.toDoubleOrNull() ?: 0.0,
-                                maxScore = maxScore.toDoubleOrNull() ?: 5.0,
-                                weightPercent = weight.toDoubleOrNull() ?: 0.0,
-                                date = System.currentTimeMillis()
+                                maxScore = 5.0,
+                                weightPercent = EQUAL_CUT_WEIGHT,
+                                date = System.currentTimeMillis(),
+                                corte = selectedCut
                             )
                         )
                         saved = true
-                        item = ""; score = ""; weight = ""
+                        score = ""
                     }
                 },
-                enabled = selectedCourse != null && selectedStudent != null && item.isNotBlank() && score.isNotBlank(),
+                enabled = selectedCourse != null && selectedStudent != null && score.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             )
         }

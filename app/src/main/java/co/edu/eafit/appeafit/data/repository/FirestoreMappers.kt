@@ -96,7 +96,8 @@ fun DocumentSnapshot.toGrade(): Grade = Grade(
     score = getDouble("score") ?: 0.0,
     maxScore = getDouble("maxScore") ?: 5.0,
     weightPercent = getDouble("weightPercent") ?: 0.0,
-    date = getLong("date") ?: 0L
+    date = getLong("date") ?: 0L,
+    corte = getLong("corte")?.toInt() ?: 0
 )
 
 fun Grade.toMap(): Map<String, Any?> = mapOf(
@@ -107,7 +108,8 @@ fun Grade.toMap(): Map<String, Any?> = mapOf(
     "score" to score,
     "maxScore" to maxScore,
     "weightPercent" to weightPercent,
-    "date" to date
+    "date" to date,
+    "corte" to corte
 )
 
 fun DocumentSnapshot.toLoan(): Loan = Loan(

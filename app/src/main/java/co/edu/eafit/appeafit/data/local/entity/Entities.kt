@@ -43,7 +43,8 @@ data class CachedGradeEntity(
     val score: Double,
     val maxScore: Double,
     val weightPercent: Double,
-    val date: Long
+    val date: Long,
+    val corte: Int
 )
 
 @Entity(tableName = "cached_news")

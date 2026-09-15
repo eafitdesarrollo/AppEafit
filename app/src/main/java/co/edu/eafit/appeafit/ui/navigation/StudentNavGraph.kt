@@ -26,7 +26,8 @@ fun NavGraphBuilder.studentGraph(
         ScheduleScreen(container, user.uid) { navController.popBackStack() }
     }
     composable(Routes.STUDENT_GPA_CALCULATOR) {
-        GpaCalculatorScreen { navController.popBackStack() }
+        val user = currentUser() ?: return@composable
+        GpaCalculatorScreen(container, user) { navController.popBackStack() }
     }
     composable(Routes.STUDENT_ACADEMIC_CALENDAR) {
         AcademicCalendarScreen(container) { navController.popBackStack() }

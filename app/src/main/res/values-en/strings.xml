@@ -140,10 +140,12 @@
     <!-- Grade entry -->
     <string name="grade_entry_select_course">Select a course</string>
     <string name="grade_entry_select_student">Select a student</string>
-    <string name="grade_entry_item_name">Assessment name</string>
+    <string name="grade_entry_cut_title">Grading period</string>
+    <string name="grade_entry_cut_desc">Choose which grading period this score belongs to</string>
+    <string name="grade_entry_cut_1">Period 1</string>
+    <string name="grade_entry_cut_2">Period 2</string>
+    <string name="grade_entry_cut_3">Period 3</string>
     <string name="grade_entry_score">Score obtained</string>
-    <string name="grade_entry_max_score">Maximum score</string>
-    <string name="grade_entry_weight">Weight (%)</string>
     <string name="grade_entry_saved">Grade saved ✓</string>
     <string name="grade_entry_save">Save grade</string>
 
@@ -163,11 +165,12 @@
     <string name="manage_announcements_content">Content</string>
 
     <!-- GPA calculator -->
-    <string name="gpa_weighted_average">Weighted average</string>
-    <string name="gpa_subject">Subject</string>
-    <string name="gpa_credits_abbrev">Cred.</string>
-    <string name="gpa_grade">Grade</string>
-    <string name="gpa_add_subject">Add subject</string>
+    <string name="gpa_semester_average">Semester average:</string>
+    <string name="gpa_final_grade">Final grade</string>
+    <string name="gpa_simulator_badge">GRADE SIMULATOR</string>
+    <string name="gpa_reset_simulation">Reset to real grades</string>
+    <string name="gpa_empty_no_courses">You are not enrolled in any courses yet</string>
+    <string name="grade_cut_short">C%1$d</string>
 
     <!-- Grades -->
     <string name="grades_overall_average">Overall average</string>

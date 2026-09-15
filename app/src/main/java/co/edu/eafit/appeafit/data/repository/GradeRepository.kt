@@ -15,10 +15,10 @@ class GradeRepository(
     private val gradeDao: GradeDao
 ) {
     private fun CachedGradeEntity.toDomain() =
-        Grade(id, studentId, courseId, courseName, item, score, maxScore, weightPercent, date)
+        Grade(id, studentId, courseId, courseName, item, score, maxScore, weightPercent, date, corte)
 
     private fun Grade.toEntity() =
-        CachedGradeEntity(id, studentId, courseId, courseName, item, score, maxScore, weightPercent, date)
+        CachedGradeEntity(id, studentId, courseId, courseName, item, score, maxScore, weightPercent, date, corte)
 
     fun observeCachedForStudent(studentId: String): Flow<List<Grade>> =
         gradeDao.observeForStudent(studentId).map { list -> list.map { it.toDomain() } }
