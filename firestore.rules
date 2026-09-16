@@ -130,15 +130,29 @@ service cloud.firestore {
       // salvo para el admin; el estado de "leído" se maneja por usuario en la subcolección
       // `reads` de abajo, no en el documento compartido.
       allow create, update, delete: if isAdmin();
+    }
 
-      // Marcador de "leído" por usuario. Reemplaza el antiguo campo compartido `read` del
-      // documento (que quedaba "leído" para TODOS los destinatarios en cuanto uno solo lo
-      // abría). Cada usuario únicamente puede leer/crear su propio marcador.
-      match /reads/{uid} {
-        allow read: if isSignedIn() && myUid() == uid;
-        allow create: if isSignedIn() && myUid() == uid && request.resource.data.uid == uid;
-        allow update, delete: if false;
-      }
+    // Marcador de "leído" por usuario, en notifications/{notificationId}/reads/{uid}.
+    // Reemplaza el antiguo campo compartido `read` del documento de notificación (que
+    // quedaba "leído" para TODOS los destinatarios en cuanto uno solo lo abría).
+    //
+    // 2026-09-16: se declara como "match /{path=**}/reads/{uid}" (NO anidado dentro de
+    // /notifications) porque un match anidado normal NO se aplica a collectionGroup
+    // queries. NotificationRepository.listFor() usa
+    // collectionGroup("reads").whereEqualTo("uid", userId), y con el match anidado esa
+    // consulta devolvía PERMISSION_DENIED sin importar la condición probada -- se intentó
+    // "myUid() == uid" (el segmento de ruta), un OR agregando
+    // "resource.data.uid == myUid()", e incluso "if isSignedIn()" a secas; las tres
+    // fallaban igual, confirmado también con pruebas directas contra la API REST de
+    // Firestore fuera de la app (no era caché del cliente ni demora de propagación). Con
+    // "{path=**}" la consulta sí queda autorizada. Como este documento solo contiene el
+    // uid de quien leyó + la fecha (nada sensible), se permite la lectura a cualquier
+    // usuario autenticado; el create sigue exigiendo que el campo y el segmento de ruta
+    // coincidan con el uid del solicitante.
+    match /{path=**}/reads/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && myUid() == uid && request.resource.data.uid == uid;
+      allow update, delete: if false;
     }
   }
 }

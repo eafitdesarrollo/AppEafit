@@ -337,7 +337,12 @@ usar esta lista como backlog priorizado.
 ### Pendientes de despliegue (no de código — ver sección 4 para detalle y comandos)
 - **Índices de Firestore** (`firestore.indexes.json`): falta un rol de IAM
   (`roles/datastore.indexAdmin`) en la cuenta de servicio de deploy. No urgente, es
-  solo rendimiento de consultas.
+  solo rendimiento de consultas — **excepto** el índice de grupo de colección
+  `reads`/`uid` creado manualmente el 2026-09-16 (punto 30, sección 8), que sí es
+  necesario para que funcione la pantalla de Notificaciones y **no** está reflejado en
+  `firestore.indexes.json`. Si se recrea el proyecto de Firestore desde cero hay que
+  volver a crear esa excepción de índice a mano (Firestore → Índices → Automáticos →
+  Agregar exención) o agregarla al archivo de índices primero.
 - **Reglas de Storage** (`storage.rules`): bloqueado porque Firebase ya no tiene plan
   gratuito para Storage — requiere que el cliente active facturación primero. Decisión
   2026-09-13: esperar a que EAFIT pague la cuenta de Firebase.
@@ -1216,3 +1221,86 @@ reset descartando la simulación y devolviendo los valores reales; login real co
 
 **Commit y push**: cambios commiteados y subidos a
 `https://github.com/eafitdesarrollo/AppEafit.git` (rama `main`).
+
+### 2026-09-16 — Santiago Guerrero Parrado
+
+**30. Bug real encontrado probando el rol Estudiante en el emulador de Android (celular
+físico descargado ese día): la pantalla de Notificaciones siempre mostraba
+`PERMISSION_DENIED: Missing or insufficient permissions.` en vez de la lista de avisos,
+para cualquier usuario.**
+
+- **Causa raíz #1 (regla de Firestore mal ubicada para collectionGroup queries)**:
+  `NotificationRepository.listFor()` usa
+  `firestore.collectionGroup("reads").whereEqualTo("uid", userId)` para saber qué
+  notificaciones ya leyó el usuario actual. La regla de `reads` estaba declarada
+  **anidada** dentro de `/notifications/{notificationId}` (`match /reads/{uid} { ... }`).
+  Un `match` anidado normal en `firestore.rules` **no aplica a consultas
+  `collectionGroup()`** — solo aplica a lecturas/escrituras en la ruta exacta
+  `notifications/{id}/reads/{uid}`. Para que Firestore autorice una `collectionGroup`
+  query hace falta declarar la regla con el wildcard recursivo `{path=**}` (
+  `match /{path=**}/reads/{uid} { ... }`), a nivel superior (no anidada). Se probaron
+  tres condiciones distintas para la regla anidada antes de encontrar esto —
+  `myUid() == uid` (el segmento de ruta), un OR agregando
+  `resource.data.uid == myUid()` (el patrón que documenta Firebase para este tipo de
+  problema), e incluso `if isSignedIn()` a secas (sin ninguna condición sobre datos) —
+  las tres devolvían el mismo `PERMISSION_DENIED` sin importar cuánto se esperara
+  después de publicar (se probó hasta 20+ minutos, y también se confirmó con
+  peticiones directas a la API REST de Firestore fuera de la app, para descartar caché
+  del cliente Android o demora de propagación). El diagnóstico correcto se confirmó
+  moviendo la regla fuera de `/notifications` a un `match /{path=**}/reads/{uid}` de
+  nivel superior en `firestore.rules` — con eso el mismo `PERMISSION_DENIED`
+  desapareció de inmediato.
+- **Decisión de seguridad tomada con el usuario (Santiago Guerrero Parrado) antes de
+  aplicarla**: la condición final de `allow read` en `/{path=**}/reads/{uid}` quedó en
+  `if isSignedIn()` (cualquier usuario autenticado puede leer estos documentos), en vez
+  de restringirla al dueño del marcador. Motivo: cada documento de `reads` solo
+  contiene `uid` (de quien leyó) + `readAt` (fecha) — nada del contenido de la
+  notificación ni datos personales — y restringir esto correctamente por dueño para una
+  `collectionGroup` query exigiría desnormalizar el dato (por ejemplo duplicar el
+  `targetUserId` de la notificación dentro de cada doc de `reads`) o mover la lógica a
+  una Cloud Function, ninguna de las cuales se justificaba para resolver un bug
+  bloqueante de esta severidad en el momento. Se preguntó explícitamente antes de
+  desplegar esta relajación de la regla (el clasificador de seguridad del entorno la
+  marcó como "Security Weaken" y pidió confirmación) y el usuario aprobó esta opción.
+  El `allow create` sigue exigiendo que `myUid() == uid` y que
+  `request.resource.data.uid == uid`, así que un usuario solo puede **crear** su propio
+  marcador de leído, aunque pueda leer los de otros.
+- **Causa raíz #2 (índice de collection group faltante)**: una vez arreglada la regla,
+  la misma consulta pasó a fallar con
+  `FAILED_PRECONDITION: The query requires a COLLECTION_GROUP_ASC index for collection
+  reads and field uid`. Firestore no crea automáticamente índices de un solo campo con
+  alcance "grupo de colecciones" (solo alcance "colección" por defecto). Se resolvió
+  agregando una **excepción de índice automático** desde la consola de Firebase
+  (Firestore → Índices → pestaña "Automáticos" → "Agregar exención": colección `reads`,
+  campo `uid`, alcance "Grupo de colecciones", orden Ascendente habilitado). El índice
+  tardó ~1-2 minutos en construirse; una vez listo, la consulta funcionó sin errores.
+- **Archivos tocados**: `firestore.rules` (movida y reescrita la regla de `reads`, con
+  comentario explicando por qué está fuera de `/notifications` y qué se probó antes de
+  llegar a esta solución).
+- **⚠️ Regla de Firestore desplegada — recordatorio obligatorio de la sección 0**: este
+  cambio se publicó manualmente vía la consola web de Firebase (Firestore → Reglas →
+  Publicar), **no** con `firebase deploy --only firestore:rules`, porque no hay una
+  cuenta autorizada en el CLI de este entorno (ver limitación ya documentada en el
+  punto 29/sección 6 sobre credenciales). El contenido de `firestore.rules` en este
+  repo **ya coincide** con lo publicado en producción (revisado línea por línea después
+  de desplegar), pero si alguien corre `firebase deploy` más adelante sin revisar esto
+  primero, va a re-publicar exactamente lo mismo — no hay drift. El índice de
+  `reads`/`uid` (grupo de colección) creado en la consola **no** está reflejado en
+  `firestore.indexes.json` de este repo (sigue pendiente el problema de IAM para
+  desplegar índices por CLI, ver sección 6) — si se recrea el proyecto de Firestore
+  desde cero, hay que volver a crear esta excepción de índice manualmente o agregarla a
+  `firestore.indexes.json` primero.
+- **Verificado**: emulador Android (`Pixel_...`, no celular físico — celular
+  desconectado/descargado ese día), login real como `estudiante.demo`, pantalla de
+  Notificaciones pasó de `PERMISSION_DENIED` a "You're all caught up, no new
+  notifications" tras el fix, confirmado con reinicio en frío de la app (force-stop +
+  relanzar) para descartar cualquier caché.
+- **Recordatorio de la regla permanente de esta bitácora** (ya vigente desde el punto
+  29, se repite aquí porque este punto vuelve a tocar una regla de `allow`): cualquier
+  función de borrado nueva en este proyecto debe seguir borrando el dato por completo
+  de la base de datos, nunca dejar una referencia huérfana a medio borrar.
+
+**Pendiente para la próxima sesión**: seguir probando los otros 3 roles
+(Profesor, Administrativo, Admin) uno por uno en el mismo emulador, incluyendo enviar
+una notificación de broadcast como `admin.demo` y confirmar que los demás roles ahora
+sí pueden leerla y marcarla como leída sin el error de permisos.
