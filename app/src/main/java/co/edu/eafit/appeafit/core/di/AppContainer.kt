@@ -17,6 +17,8 @@ import co.edu.eafit.appeafit.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class AppContainer(context: Context) {
 
@@ -42,4 +44,16 @@ class AppContainer(context: Context) {
     val attendanceRepository = AttendanceRepository(firestore)
     val settingsRepository = SettingsRepository(context.applicationContext)
     val teacherEvaluationRepository = TeacherEvaluationRepository(firestore)
+
+    /**
+     * El caché local de Room no se borraba al cerrar sesión, así que cambiar de cuenta en
+     * el mismo dispositivo dejaba acumulados (para siempre) los datos del usuario anterior
+     * en `eafit_offline.db` -- no se filtraban a la cuenta nueva (todas las consultas ya
+     * están acotadas por uid/studentId/professorId), pero crecían sin límite y violaban la
+     * regla de esta bitácora de no dejar datos residuales. Se llama desde
+     * SessionViewModel.signOut() antes de auth.signOut().
+     */
+    suspend fun clearLocalCache() = withContext(Dispatchers.IO) {
+        database.clearAllTables()
+    }
 }

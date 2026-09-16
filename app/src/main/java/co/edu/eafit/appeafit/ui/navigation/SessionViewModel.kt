@@ -49,6 +49,9 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun signOut() {
-        container.authRepository.signOut()
+        viewModelScope.launch {
+            container.clearLocalCache()
+            container.authRepository.signOut()
+        }
     }
 }

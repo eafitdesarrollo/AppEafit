@@ -1304,3 +1304,71 @@ para cualquier usuario.**
 (Profesor, Administrativo, Admin) uno por uno en el mismo emulador, incluyendo enviar
 una notificación de broadcast como `admin.demo` y confirmar que los demás roles ahora
 sí pueden leerla y marcarla como leída sin el error de permisos.
+
+**31. Dos hallazgos más, siguiendo con la prueba de roles en el emulador: (a) login
+nuevo (nunca antes hecho en este emulador) fallaba con "credential incorrecto" para
+CUALQUIER cuenta que no tuviera ya sesión guardada; (b) la base de datos local (Room)
+nunca se borraba al cerrar sesión.**
+
+- **(a) Login nuevo rechazado con "The supplied auth credential is incorrect,
+  malformed or has expired."** Pasaba solo con `profesor.demo` (el celular físico ya
+  tenía sesión guardada de `estudiante.demo` de antes, así que nunca se probó un login
+  fresco en este emulador hasta ahora). Verificado con la API REST de Identity Toolkit
+  que la contraseña SÍ era correcta, descartando error de tipeo. El logcat mostraba
+  `FirebaseAuth: Logging in as profesor.demo@eafit.edu.co with empty reCAPTCHA token`
+  seguido del rechazo — es decir, el SDK de Firebase Auth intenta un reto de
+  reCAPTCHA/Play Integrity antes de autenticar, y si ese reto no se puede completar
+  (token vacío), el backend rechaza el login pero lo reporta engañosamente como
+  credencial incorrecta. Causa encontrada: en Firebase Console → Configuración del
+  proyecto → App Android Debug (`co.edu.eafit.appeafit.debug`), el campo "Huellas
+  digitales del certificado SHA" estaba **completamente vacío** — nunca se había
+  registrado la huella del `debug.keystore` local, así que Play Integrity no podía
+  verificar la app y el reto de reCAPTCHA fallaba silenciosamente. Se generaron las
+  huellas SHA-1 y SHA-256 del keystore de debug (
+  `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey
+  -storepass android -keypass android`, con `-J-Duser.language=en` para esquivar un
+  bug de formato regional en este keytool) y se agregaron ambas en la consola de
+  Firebase para esa app. Tras reiniciar el proceso de la app (force-stop + relanzar,
+  necesario para que se refresque la sesión de atestación), el login de `profesor.demo`
+  funcionó normalmente. **No se tocó ninguna configuración de seguridad de reCAPTCHA
+  en la consola** — el problema era solo la huella SHA faltante, no una política que
+  hubiera que relajar.
+  - **Pendiente**: la app de producción (`co.edu.eafit.appeafit`, no `.debug`) también
+    tiene las huellas SHA vacías en la consola — si alguna vez se genera un APK/AAB de
+    release firmado con un keystore real, hay que repetir este mismo paso con la
+    huella de ESE keystore antes de publicarlo, o los logins nuevos fallarán igual en
+    producción.
+- **(b) La base de datos local (Room, `eafit_offline.db`) no se borraba al cerrar
+  sesión.** Pedido explícito de Santiago Guerrero Parrado al notar que cambiar de
+  cuenta en el mismo dispositivo dejaba datos acumulados. Verificado en el código: las
+  consultas de Room YA estaban acotadas por uid/studentId/professorId (no había fuga
+  de datos de un usuario a otro), pero nada llamaba a limpiar las tablas, así que los
+  datos de cada cuenta que alguna vez inició sesión en el dispositivo se quedaban ahí
+  para siempre, creciendo sin límite — exactamente el tipo de residuo que la regla
+  permanente de esta bitácora (punto 29) prohíbe. Arreglado:
+  - `core/di/AppContainer.kt`: nuevo método `suspend fun clearLocalCache()` que llama
+    a `database.clearAllTables()` (API nativa de Room que borra todas las filas de
+    todas las tablas en una transacción) en `Dispatchers.IO`.
+  - `ui/navigation/SessionViewModel.kt`: `signOut()` ahora lanza una corrutina que
+    primero llama a `container.clearLocalCache()` y luego a
+    `container.authRepository.signOut()` (antes solo hacía lo segundo).
+  - **Verificado end-to-end en el emulador**: login como `estudiante.demo`, se abrió
+    "My grades" para forzar la sincronización (`cached_user`=1, `cached_grade`=4,
+    `cached_course`=2, `cached_enrollment`=2 filas, confirmado con
+    `sqlite3 databases/eafit_offline.db` vía `adb shell run-as`), cerrar sesión desde
+    Perfil → Sign out → Accept, y las 7 tablas de caché (`cached_user`, `cached_grade`,
+    `cached_course`, `cached_enrollment`, `cached_news`, `cached_calendar_event`,
+    `sync_state`) quedaron en 0 filas inmediatamente después.
+- **Archivos tocados**: `core/di/AppContainer.kt`, `ui/navigation/SessionViewModel.kt`.
+  Ningún cambio en `firestore.rules` ni en la consola de Firebase para el punto (b).
+- **Verificado además**: tras el fix de SHA y el borrado de caché, se probó el flujo
+  completo de nuevo: login `estudiante.demo` → notificaciones OK → sign out → caché en
+  0 filas → login `profesor.demo` (login fresco, antes bloqueado) → Home de Profesor
+  cargó bien → notificaciones de Profesor también sin error de permisos ("You're all
+  caught up, no new notifications").
+- **`./gradlew compileDebugKotlin` y `assembleDebug` exitosos**; APK reinstalado en el
+  emulador con `adb install -r` para probar este cambio.
+
+**Pendiente para la próxima sesión**: falta probar Administrativo y Admin (ahora que el
+login fresco funciona para cualquier cuenta), incluyendo el envío de una notificación
+de broadcast como `admin.demo`.
