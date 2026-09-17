@@ -1484,18 +1484,49 @@ imágenes de anuncios) en vez de recuadros vacíos.**
   perfil.
 - **`./gradlew compileDebugKotlin`/`assembleDebug` exitosos**; APK reinstalado con
   `adb install -r`.
-- **Cuándo revertir a Firebase Storage**: en cuanto el cliente active el plan Blaze
-  de Firebase (ver sección 6, "Reglas de Storage"), hay que: (a) desplegar
-  `storage.rules` (ya escrito, solo pendiente de plan pagado); (b) volver a apuntar
-  `ProfileViewModel` y `ManageAnnouncementsScreen`/`NewsRepository` a
-  `container.storage` (Firebase Storage, que se dejó intacto y sin usar en
-  `AppContainer.kt` justo para este momento) en vez de `container.imageKitClient`;
-  (c) decidir qué hacer con las imágenes ya subidas a ImageKit (dejarlas ahí
-  indefinidamente sirviendo desde `ik.imagekit.io`, o migrarlas a Firebase Storage)
-  — no es obligatorio migrarlas, ImageKit puede seguir sirviendo esas URLs
-  específicas sin costo mientras se mantenga la cuenta gratuita; (d) opcionalmente
-  borrar la cuenta de ImageKit y las claves embebidas del código si ya no se va a
-  usar más.
+- **⚠️ Nota de seguridad sobre el push de este commit**: el clasificador de
+  seguridad del entorno bloqueó el primer intento de `git push` de este commit
+  porque el código (`ImageKitClient.kt`) contiene la clave privada de ImageKit en
+  texto plano (ver más arriba, "Decisión de seguridad"). Se le explicó esto a
+  Santiago Guerrero Parrado antes de forzar el push; su decisión explícita fue
+  **subirlo tal cual** ("eso se va a quitar cuando el cliente pague storage de
+  firebase"), con la condición de dejar aquí, en constancia, exactamente qué
+  secreto quedó expuesto en el historial de git y qué hay que hacer cuando llegue
+  ese momento. Por eso este punto se redacta como checklist explícito en vez de
+  prosa general:
+  - **Qué quedó expuesto en GitHub** (repo privado `eafitdesarrollo/AppEafit`,
+    rama `main`, este commit en adelante): la clave privada completa de la cuenta
+    de ImageKit (`eafitdesarrollo@gmail.com`, ImageKit ID `eafit`), en
+    `app/src/main/java/co/edu/eafit/appeafit/core/imagekit/ImageKitClient.kt`,
+    constante `PRIVATE_KEY` (empieza con `private_nYm6...`). Con esa clave se puede
+    firmar subidas y también **borrar cualquier archivo** de esa cuenta de
+    ImageKit vía su API — no da acceso a Firebase ni a ningún otro sistema de este
+    proyecto, solo a esa cuenta de ImageKit.
+  - **Qué hacer cuando Santiago Guerrero Parrado dé la instrucción de que el
+    cliente ya pagó Storage de Firebase** (checklist, en este orden):
+    1. Desplegar `storage.rules` (ya escrito en el repo, solo pendiente de plan
+       pagado — ver sección 6, "Reglas de Storage").
+    2. En `ui/profile/ProfileViewModel.kt` y
+       `ui/staff/ManageAnnouncementsScreen.kt`/`data/repository/NewsRepository.kt`,
+       volver a usar `container.storage` (Firebase Storage — se dejó declarado y
+       sin usar en `AppContainer.kt` a propósito para este momento) en vez de
+       `container.imageKitClient`.
+    3. Decidir qué hacer con las imágenes ya subidas a ImageKit (las 2 de los
+       anuncios institucionales, más cualquier foto de perfil/anuncio que se haya
+       subido mientras tanto): no es obligatorio migrarlas, ImageKit puede seguir
+       sirviéndolas gratis indefinidamente mientras la cuenta exista; solo hay que
+       migrarlas si se quiere depender exclusivamente de Firebase.
+    4. **Borrar `ImageKitClient.kt` del código** (o al menos vaciar las constantes
+       `PUBLIC_KEY`/`PRIVATE_KEY`) y quitar la dependencia de OkHttp si ya no se
+       usa para nada más.
+    5. Entrar a `imagekit.io/dashboard/developer/api-keys` (cuenta
+       `eafitdesarrollo@gmail.com`) y **regenerar/revocar la clave privada** que
+       quedó en el historial de git — aunque se borre del código nuevo, sigue
+       existiendo en commits viejos del repo, así que no basta con borrarla del
+       archivo; hay que invalidarla desde la consola de ImageKit para que esa
+       clave expuesta deje de servir para algo.
+    6. Si ya no se va a usar ImageKit para nada más, opcionalmente eliminar la
+       cuenta completa desde ImageKit.
 - **Recordatorio de la regla permanente de esta bitácora** (pedido explícito de
   Santiago Guerrero Parrado, vigente desde el punto 29): cualquier función de
   borrado, existente o futura, debe borrar el dato por completo de donde esté
