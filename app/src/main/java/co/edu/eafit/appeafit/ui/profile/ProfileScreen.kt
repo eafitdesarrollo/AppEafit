@@ -34,7 +34,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,7 +82,8 @@ fun ProfileScreen(
                         AsyncImage(
                             model = user.photoUrl,
                             contentDescription = null,
-                            modifier = Modifier.size(88.dp).background(avatarGradient, CircleShape)
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(88.dp).clip(CircleShape).background(avatarGradient)
                         )
                     } else {
                         androidx.compose.foundation.layout.Box(

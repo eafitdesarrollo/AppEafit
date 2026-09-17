@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -61,6 +61,7 @@ import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.domain.model.NewsItem
 import co.edu.eafit.appeafit.ui.components.EafitCard
 import co.edu.eafit.appeafit.ui.components.EmptyState
+import co.edu.eafit.appeafit.ui.components.ImageSizeHint
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 
@@ -177,7 +178,7 @@ fun ManageAnnouncementsScreen(container: AppContainer, authorId: String, onBack:
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp)
+                            .aspectRatio(16f / 9f)
                             .clip(RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .clickable(enabled = !isSaving) {
@@ -196,6 +197,8 @@ fun ManageAnnouncementsScreen(container: AppContainer, authorId: String, onBack:
                             Icon(Icons.Filled.AddPhotoAlternate, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
+                    androidx.compose.foundation.layout.Spacer(Modifier.size(6.dp))
+                    ImageSizeHint(text = stringResource(R.string.image_hint_news))
                     androidx.compose.foundation.layout.Spacer(Modifier.size(12.dp))
                     OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.broadcast_title_label)) }, singleLine = true, enabled = !isSaving)
                     OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text(stringResource(R.string.manage_announcements_category)) }, singleLine = true, enabled = !isSaving)

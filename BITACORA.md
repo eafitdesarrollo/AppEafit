@@ -1538,3 +1538,64 @@ imágenes de anuncios) en vez de recuadros vacíos.**
 ImageKit (20GB/mes) desde `imagekit.io/dashboard/usage-analytics` a medida que se
 agreguen más imágenes de prueba; revertir a Firebase Storage según los pasos del
 punto anterior en cuanto el cliente pague el plan Blaze.
+
+**34. Corregidas dos fallas visuales relacionadas con imágenes, reportadas por
+Santiago Guerrero Parrado tras ver las tarjetas de EAFIT News en el Home: (a) las
+imágenes se recortaban mal y no se adaptaban a la tarjeta; (b) no había ninguna guía
+de qué tamaño de imagen conviene subir en ningún lugar donde se sube una foto.**
+
+- **(a) Recorte de imágenes en las tarjetas de "EAFIT News"** (`ui/components/
+  NewsCard.kt`). Causa raíz: la tarjeta completa (220dp × 260dp, proporción vertical
+  ~0.85) usaba la imagen como fondo a pantalla completa con
+  `ContentScale.Crop` y el texto superpuesto encima con un degradado. Las imágenes
+  de anuncios son horizontales (las que se subieron, 800×450px, proporción 16:9)
+  — al forzar una imagen horizontal dentro de un recuadro vertical con Crop, se
+  recortaba casi todo el ancho de la imagen, dejando solo una franja angosta del
+  centro. Arreglado rediseñando la tarjeta: ahora el recuadro de imagen tiene su
+  propio `aspectRatio(16f/9f)` (la misma proporción recomendada al subir, ver
+  siguiente punto) en la parte de arriba de la tarjeta, y el título va **debajo** de
+  la imagen en texto normal (ya no superpuesto ni con degradado) — así la imagen se
+  ve completa y el texto siempre es legible sin depender de qué tan oscura sea la
+  foto de fondo.
+- **(b) Sin ninguna guía de tamaño recomendado al subir fotos, en ningún lado.**
+  Pedido explícito: que la app le diga al usuario, al momento de subir cualquier
+  foto (perfil, anuncio, o cualquier otro lugar futuro), qué tamaño/proporción
+  conviene — pero **de forma permisiva, no obligatoria**: es una guía para que la
+  imagen se adapte bien a donde se va a mostrar, no una validación que bloquee la
+  subida si no coincide exactamente.
+  - Nuevo componente reutilizable `ui/components/ImageSizeHint.kt`: un texto con
+    ícono de información, pensado para usarse junto a cualquier selector de imagen
+    futuro en la app (no solo los dos que existen hoy).
+  - `ui/staff/ManageAnnouncementsScreen.kt`: el recuadro de selección de imagen del
+    diálogo "nuevo anuncio" ahora tiene el mismo `aspectRatio(16:9)` de la tarjeta
+    final (para que el usuario vea de entrada cómo va a quedar recortada), con el
+    hint de texto debajo: "Recomendado: foto horizontal, aprox. 800×450 px
+    (proporción 16:9)...".
+  - `ui/profile/EditProfileScreen.kt`: hint debajo del avatar: "Recomendado: foto
+    cuadrada, aprox. 500×500 px, con la cara centrada...".
+  - Estrings nuevos `image_hint_news`/`image_hint_profile` en
+    `values/strings.xml` y `values-en/strings.xml` (138 entradas en ambos,
+    mantiene la paridad).
+  - **No se agregó ninguna validación que bloquee el guardado** si la imagen no
+    coincide con la medida recomendada — se subió tal cual lo pidió Santiago
+    Guerrero Parrado ("que sea un poco permisiva... y que si no es esa no se puede,
+    eso no").
+- **De paso, se encontró y corrigió el mismo tipo de recorte mal hecho en las 4
+  fotos de perfil circulares de la app** (`ui/profile/ProfileScreen.kt`,
+  `ui/profile/EditProfileScreen.kt`, `ui/carnet/CarnetScreen.kt`,
+  `ui/student/GpaCalculatorScreen.kt`): todas usaban `Modifier.background(brush,
+  CircleShape)` para el fondo pero **sin** `.clip(CircleShape)` ni
+  `contentScale = ContentScale.Crop` en el `AsyncImage` — es decir, el fondo se
+  pintaba como círculo pero la foto en sí no se recortaba a esa forma, así que
+  cualquier foto que no fuera perfectamente cuadrada se veía deformada/mal
+  encajada dentro del círculo. Se agregó `.clip(CircleShape)` +
+  `contentScale = ContentScale.Crop` a las 4. Esto es exactamente el ejemplo que
+  dio Santiago Guerrero Parrado ("como la foto de perfil") de dónde se necesitaba
+  esta corrección.
+- **Verificado en el emulador** tras reinstalar el APK: las tarjetas de EAFIT News
+  ahora muestran la imagen completa en 16:9 con el título debajo, sin recortes
+  raros; el avatar de perfil (rol Administrativo, la foto de prueba subida en el
+  punto 33) se ve como un círculo limpio y bien recortado; el diálogo de nuevo
+  anuncio muestra el recuadro 16:9 y el texto de guía correctamente.
+- **`./gradlew compileDebugKotlin`/`assembleDebug` exitosos**; APK reinstalado con
+  `adb install -r`.

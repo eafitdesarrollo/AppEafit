@@ -164,6 +164,12 @@
     <string name="manage_announcements_category">Category</string>
     <string name="manage_announcements_content">Content</string>
 
+    <!-- Image upload hints: recommended-size guidance shown when uploading a photo
+         (not a hard requirement, just a suggestion so the image fits well where it's
+         shown). -->
+    <string name="image_hint_news">Recommended: landscape photo, approx. 800×450 px (16:9 ratio). It doesn\'t have to match exactly, but the closer it is, the better it fits the card.</string>
+    <string name="image_hint_profile">Recommended: square photo, approx. 500×500 px, with the face centered. It doesn\'t have to match exactly.</string>
+
     <!-- GPA calculator -->
     <string name="gpa_semester_average">Semester average:</string>
     <string name="gpa_final_grade">Final grade</string>

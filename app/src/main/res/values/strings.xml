@@ -164,6 +164,12 @@
     <string name="manage_announcements_category">Categoría</string>
     <string name="manage_announcements_content">Contenido</string>
 
+    <!-- Image upload hints: guía de tamaño recomendado al subir una foto (no es una
+         validación obligatoria, solo una sugerencia para que la imagen se adapte bien
+         a donde se va a mostrar). -->
+    <string name="image_hint_news">Recomendado: foto horizontal, aprox. 800×450 px (proporción 16:9). No es obligatorio usar esa medida exacta, pero entre más se acerque, mejor se adapta a la tarjeta.</string>
+    <string name="image_hint_profile">Recomendado: foto cuadrada, aprox. 500×500 px, con la cara centrada. No es obligatorio usar esa medida exacta.</string>
+
     <!-- GPA calculator -->
     <string name="gpa_semester_average">Promedio semestre:</string>
     <string name="gpa_final_grade">Nota final</string>

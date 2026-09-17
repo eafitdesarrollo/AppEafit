@@ -33,7 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,9 +81,9 @@ fun EditProfileScreen(container: AppContainer, user: User, onBack: () -> Unit) {
                     .size(96.dp)
                     .align(Alignment.CenterHorizontally)
                     .pressScale(avatarInteractionSource)
+                    .clip(CircleShape)
                     .background(
-                        Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)),
-                        CircleShape
+                        Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary))
                     )
                     .clickable(interactionSource = avatarInteractionSource, indication = null) {
                         pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -89,13 +91,18 @@ fun EditProfileScreen(container: AppContainer, user: User, onBack: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 if (photoUri != null) {
-                    AsyncImage(model = photoUri, contentDescription = null, modifier = Modifier.fillMaxSize())
+                    AsyncImage(model = photoUri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 } else if (user.photoUrl.isNotBlank()) {
-                    AsyncImage(model = user.photoUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
+                    AsyncImage(model = user.photoUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 } else {
                     Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
+            androidx.compose.foundation.layout.Spacer(Modifier.height(10.dp))
+            co.edu.eafit.appeafit.ui.components.ImageSizeHint(
+                text = stringResource(R.string.image_hint_profile),
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 24.dp)
+            )
 
             androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
             OutlinedTextField(
