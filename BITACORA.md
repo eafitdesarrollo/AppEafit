@@ -1599,3 +1599,49 @@ de qué tamaño de imagen conviene subir en ningún lugar donde se sube una foto
   anuncio muestra el recuadro 16:9 y el texto de guía correctamente.
 - **`./gradlew compileDebugKotlin`/`assembleDebug` exitosos**; APK reinstalado con
   `adb install -r`.
+
+### 2026-09-17 — Santiago Guerrero Parrado
+
+**35. Se inicia el proyecto del sitio web de EAFIT (`appeafit-web-frontend` +
+`appeafit-web-backend`, contratado directamente por EAFIT), que comparte este mismo
+proyecto de Firebase (`appeafit-297d5`). Este punto documenta los cambios que ese
+proyecto nuevo le hizo a `firestore.rules`, que vive en ESTE repo.**
+
+- **Dos repos nuevos en GitHub** (privados, cuenta `eafitdesarrollo`):
+  `appeafit-web-frontend` (React + Vite + TypeScript + React Router + Tailwind +
+  react-i18next) y `appeafit-web-backend` (Node + Express + TypeScript), clonados en
+  `EAFIT/web/` (junto a `EAFIT/repo/`, que es este repo de la app móvil). Cada uno
+  tiene su propia BITACORA.md con las mismas reglas de esta sección 0.
+- **`firestore.rules` modificado** para que el sitio web público pueda leer datos sin
+  que el visitante inicie sesión (a diferencia de la app móvil, donde todo exige
+  login):
+  - `news`: `allow read` cambiado de `isSignedIn()` a `true` -- las mismas noticias
+    que ya ve la app móvil ahora también se muestran en la sección "Noticias" del
+    sitio web, sin duplicar datos.
+  - **Colección nueva `hero_slides`**: imágenes/videos en loop del hero de la portada
+    del sitio web. Lectura pública (`allow read: if true`), escritura solo
+    Staff/Admin. Se sembraron 2 documentos de ejemplo reutilizando las 2 imágenes de
+    ImageKit ya subidas para los anuncios de la app móvil (punto 33) -- mismo
+    principio: la imagen la administra Admin/Staff, hoy vía ImageKit (temporal),
+    después vía Firebase Storage cuando el cliente pague el plan Blaze (pedido
+    explícito de Santiago Guerrero Parrado, aplica igual a este hero que a las
+    fotos de perfil/anuncios ya documentadas).
+  - **Colección nueva `contact_messages`**: mensajes del formulario de contacto del
+    sitio web (nombre, correo, teléfono, mensaje -- datos personales de gente que no
+    necesariamente tiene cuenta). `allow create: if true` como respaldo (el backend
+    los crea normalmente con Admin SDK, que bypasa las reglas), lectura solo
+    Staff/Admin porque contiene datos personales.
+- **⚠️ Regla de Firestore desplegada — recordatorio obligatorio de la sección 0**:
+  los 3 cambios de arriba se publicaron manualmente vía la consola de Firebase
+  (mismo método ya usado en los puntos 30/31 de esta bitácora, sin CLI). Verificado
+  que `firestore.rules` de este repo coincide línea por línea con lo publicado.
+- **Pendiente explícito para la app móvil** (anotado aquí para que quede en
+  constancia, aunque no se construyó en esta sesión): falta una pantalla de Admin en
+  esta app para gestionar `hero_slides` (crear/editar/borrar slides del sitio web)
+  con el mismo patrón que `ManageAnnouncementsScreen` -- hoy esos 2 documentos de
+  ejemplo se crearon a mano vía la API de Firestore, no desde la app.
+- **Recordatorio de la regla permanente de esta bitácora**: si en el futuro se agrega
+  una función para borrar un `hero_slide` (desde la app móvil o donde sea), debe
+  borrar también la imagen/video asociado del proveedor que esté activo en ese
+  momento (ImageKit ahora, Storage después) -- mismo patrón que ya aplica
+  `NewsRepository.delete()` para los anuncios (punto 33).

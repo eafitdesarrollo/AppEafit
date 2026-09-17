@@ -52,10 +52,36 @@ service cloud.firestore {
     }
 
     // ----- News / institutional announcements -----
+    // 2026-09-17: lectura pública (antes exigía isSignedIn()) porque el sitio web
+    // público (appeafit-web-frontend) muestra estas mismas noticias en su sección
+    // "Noticias" a visitantes anónimos, sin que inicien sesión -- son anuncios
+    // institucionales públicos, no hay ningún dato sensible en este documento.
     match /news/{newsId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isProfessor() || isStaffOrAdmin();
       allow update, delete: if isStaffOrAdmin();
+    }
+
+    // ----- Hero del sitio web (imágenes/videos en loop de la portada) -----
+    // 2026-09-17: colección nueva para appeafit-web-frontend. Lectura pública
+    // (el hero se ve sin iniciar sesión, igual que el resto del sitio público).
+    // La escritura queda para el panel de Admin -- por ahora solo vía consola de
+    // Firebase; agregar la pantalla de gestión en la app móvil (mismo patrón que
+    // ManageAnnouncementsScreen) queda como pendiente explícito, ver BITACORA.
+    match /hero_slides/{slideId} {
+      allow read: if true;
+      allow create, update, delete: if isStaffOrAdmin();
+    }
+
+    // ----- Mensajes del formulario de contacto del sitio web -----
+    // 2026-09-17: el backend (appeafit-web-backend) los crea con Admin SDK
+    // (bypasa las reglas), así que este `create` público es un respaldo por si
+    // en el futuro se escribiera directo desde el cliente sin backend. La
+    // lectura queda para Staff/Admin -- contiene datos personales (nombre,
+    // correo, teléfono) de personas que no necesariamente tienen cuenta.
+    match /contact_messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isStaffOrAdmin();
     }
 
     // ----- Academic calendar -----
