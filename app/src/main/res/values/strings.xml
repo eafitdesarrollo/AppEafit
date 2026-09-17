@@ -88,6 +88,7 @@
     <!-- Staff services -->
     <string name="service_directory">Directorio institucional</string>
     <string name="service_manage_announcements">Gestionar anuncios</string>
+    <string name="service_manage_hero">Gestionar hero del sitio web</string>
 
     <!-- Admin services -->
     <string name="service_manage_users">Gestión de usuarios</string>
@@ -163,6 +164,16 @@
     <string name="manage_announcements_empty">No hay anuncios publicados</string>
     <string name="manage_announcements_category">Categoría</string>
     <string name="manage_announcements_content">Contenido</string>
+
+    <!-- Manage hero slides (staff/admin): imágenes/videos del hero del sitio web -->
+    <string name="manage_hero_new">Nuevo slide</string>
+    <string name="manage_hero_edit">Editar slide</string>
+    <string name="manage_hero_empty">No hay slides publicados en el hero</string>
+    <string name="manage_hero_subtitle">Subtítulo (opcional)</string>
+    <string name="manage_hero_cta_label">Texto del botón (opcional)</string>
+    <string name="manage_hero_cta_href">Enlace del botón, ej: /admisiones (opcional)</string>
+    <string name="manage_hero_order_label">Orden</string>
+    <string name="manage_hero_media_hint">Puedes elegir una foto o un video. Recomendado: proporción 16:9 (igual que el hero del sitio). El video se reproduce en loop, silenciado, y cambia de slide cada 10 segundos igual que una foto.</string>
 
     <!-- Image upload hints: guía de tamaño recomendado al subir una foto (no es una
          validación obligatoria, solo una sugerencia para que la imagen se adapte bien

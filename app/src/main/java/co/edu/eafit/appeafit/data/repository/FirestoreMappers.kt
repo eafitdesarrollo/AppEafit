@@ -6,6 +6,7 @@ import co.edu.eafit.appeafit.domain.model.AttendanceSession
 import co.edu.eafit.appeafit.domain.model.CalendarEvent
 import co.edu.eafit.appeafit.domain.model.Course
 import co.edu.eafit.appeafit.domain.model.Grade
+import co.edu.eafit.appeafit.domain.model.HeroSlide
 import co.edu.eafit.appeafit.domain.model.Loan
 import co.edu.eafit.appeafit.domain.model.NewsItem
 import co.edu.eafit.appeafit.domain.model.Role
@@ -55,6 +56,29 @@ fun NewsItem.toMap(): Map<String, Any?> = mapOf(
     "imageFileId" to imageFileId,
     "authorId" to authorId,
     "publishedAt" to publishedAt
+)
+
+fun DocumentSnapshot.toHeroSlide(): HeroSlide = HeroSlide(
+    id = id,
+    type = getString("type").orEmpty().ifEmpty { "image" },
+    url = getString("url").orEmpty(),
+    mediaFileId = getString("mediaFileId").orEmpty(),
+    title = getString("title").orEmpty(),
+    subtitle = getString("subtitle").orEmpty(),
+    ctaLabel = getString("ctaLabel").orEmpty(),
+    ctaHref = getString("ctaHref").orEmpty(),
+    order = (getLong("order") ?: 0L).toInt()
+)
+
+fun HeroSlide.toMap(): Map<String, Any?> = mapOf(
+    "type" to type,
+    "url" to url,
+    "mediaFileId" to mediaFileId,
+    "title" to title,
+    "subtitle" to subtitle,
+    "ctaLabel" to ctaLabel,
+    "ctaHref" to ctaHref,
+    "order" to order
 )
 
 @Suppress("UNCHECKED_CAST")

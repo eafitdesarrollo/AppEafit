@@ -9,6 +9,7 @@ import co.edu.eafit.appeafit.data.repository.AuthRepository
 import co.edu.eafit.appeafit.data.repository.CalendarRepository
 import co.edu.eafit.appeafit.data.repository.CourseRepository
 import co.edu.eafit.appeafit.data.repository.GradeRepository
+import co.edu.eafit.appeafit.data.repository.HeroSlideRepository
 import co.edu.eafit.appeafit.data.repository.LoanRepository
 import co.edu.eafit.appeafit.data.repository.NewsRepository
 import co.edu.eafit.appeafit.data.repository.NotificationRepository
@@ -40,6 +41,7 @@ class AppContainer(context: Context) {
     val authRepository = AuthRepository(auth)
     val userRepository = UserRepository(firestore, database.userDao())
     val newsRepository = NewsRepository(firestore, database.newsDao(), imageKitClient)
+    val heroSlideRepository = HeroSlideRepository(firestore, imageKitClient)
     val courseRepository = CourseRepository(firestore, database.courseDao(), database.enrollmentDao())
     val gradeRepository = GradeRepository(firestore, database.gradeDao())
     val calendarRepository = CalendarRepository(firestore, database.calendarEventDao())

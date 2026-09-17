@@ -26,9 +26,11 @@ object Routes {
 
     const val STAFF_DIRECTORY = "staff/directory"
     const val STAFF_MANAGE_ANNOUNCEMENTS = "staff/manage_announcements"
+    const val STAFF_MANAGE_HERO_SLIDES = "staff/manage_hero_slides"
 
     const val ADMIN_MANAGE_USERS = "admin/manage_users"
     const val ADMIN_MANAGE_CONTENT = "admin/manage_content"
+    const val ADMIN_MANAGE_HERO_SLIDES = "admin/manage_hero_slides"
     const val ADMIN_BROADCAST = "admin/broadcast"
     const val ADMIN_STATS = "admin/stats"
 }

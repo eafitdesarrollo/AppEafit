@@ -88,6 +88,7 @@
     <!-- Staff services -->
     <string name="service_directory">Institutional directory</string>
     <string name="service_manage_announcements">Manage announcements</string>
+    <string name="service_manage_hero">Manage website hero</string>
 
     <!-- Admin services -->
     <string name="service_manage_users">Manage users</string>
@@ -163,6 +164,16 @@
     <string name="manage_announcements_empty">No announcements published</string>
     <string name="manage_announcements_category">Category</string>
     <string name="manage_announcements_content">Content</string>
+
+    <!-- Manage hero slides (staff/admin): website hero images/videos -->
+    <string name="manage_hero_new">New slide</string>
+    <string name="manage_hero_edit">Edit slide</string>
+    <string name="manage_hero_empty">No slides published in the hero</string>
+    <string name="manage_hero_subtitle">Subtitle (optional)</string>
+    <string name="manage_hero_cta_label">Button text (optional)</string>
+    <string name="manage_hero_cta_href">Button link, e.g. /admisiones (optional)</string>
+    <string name="manage_hero_order_label">Order</string>
+    <string name="manage_hero_media_hint">You can choose a photo or a video. Recommended: 16:9 ratio (same as the website hero). Video loops muted and the slide still advances every 10 seconds just like a photo.</string>
 
     <!-- Image upload hints: recommended-size guidance shown when uploading a photo
          (not a hard requirement, just a suggestion so the image fits well where it's

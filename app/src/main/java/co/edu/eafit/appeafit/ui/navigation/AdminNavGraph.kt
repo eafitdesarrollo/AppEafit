@@ -9,6 +9,7 @@ import co.edu.eafit.appeafit.ui.admin.BroadcastScreen
 import co.edu.eafit.appeafit.ui.admin.ManageUsersScreen
 import co.edu.eafit.appeafit.ui.admin.StatsScreen
 import co.edu.eafit.appeafit.ui.staff.ManageAnnouncementsScreen
+import co.edu.eafit.appeafit.ui.staff.ManageHeroSlidesScreen
 
 fun NavGraphBuilder.adminGraph(
     container: AppContainer,
@@ -21,6 +22,9 @@ fun NavGraphBuilder.adminGraph(
     composable(Routes.ADMIN_MANAGE_CONTENT) {
         val user = currentUser() ?: return@composable
         ManageAnnouncementsScreen(container, user.uid) { navController.popBackStack() }
+    }
+    composable(Routes.ADMIN_MANAGE_HERO_SLIDES) {
+        ManageHeroSlidesScreen(container) { navController.popBackStack() }
     }
     composable(Routes.ADMIN_BROADCAST) {
         BroadcastScreen(container) { navController.popBackStack() }

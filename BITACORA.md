@@ -1645,3 +1645,58 @@ proyecto nuevo le hizo a `firestore.rules`, que vive en ESTE repo.**
   borrar también la imagen/video asociado del proveedor que esté activo en ese
   momento (ImageKit ahora, Storage después) -- mismo patrón que ya aplica
   `NewsRepository.delete()` para los anuncios (punto 33).
+
+### 2026-09-17 — Santiago Guerrero Parrado
+
+**36. Se construye el pendiente explícito del punto 35: pantalla de Admin/Staff para
+gestionar `hero_slides` desde la app móvil (`ManageHeroSlidesScreen`).** Motivado por
+el pedido "termina TODO" -- ya no hay que crear/editar/borrar los slides del hero del
+sitio web a mano vía la consola de Firebase.
+
+- **`domain/model/HeroSlide.kt`** (nuevo): `id, type ("image"|"video"), url,
+  mediaFileId, title, subtitle, ctaLabel, ctaHref, order` -- mismo shape que
+  `HeroSlide` en `web/appeafit-web-frontend/src/types.ts` (única fuente de verdad de
+  qué campos lee el sitio), más `mediaFileId` que es de uso interno de esta app (para
+  poder borrar el archivo de ImageKit; el sitio web no lo lee ni le importa).
+- **`data/repository/FirestoreMappers.kt`**: se agregan `toHeroSlide()` / `toMap()`
+  para `HeroSlide`, mismo patrón que `NewsItem`.
+- **`data/repository/HeroSlideRepository.kt`** (nuevo): `fetchAll()` (ordenado por
+  `order` asc, sin caché local en Room porque es una colección pequeña que solo se
+  administra en línea desde esta pantalla), `publish()`, `update()` (para poder
+  editar un slide existente, no solo crear/borrar), y `delete()` -- que borra primero
+  el archivo de ImageKit (`mediaFileId`) y luego el documento de Firestore, cumpliendo
+  la regla permanente de borrado completo.
+- **`ui/staff/ManageHeroSlidesScreen.kt`** (nuevo): mismo patrón visual que
+  `ManageAnnouncementsScreen` (`Scaffold` + FAB + `LazyColumn` de `EafitCard`s +
+  `AlertDialog` de formulario), con dos diferencias explícitas que pedía el hero y que
+  anuncios no tenía:
+  1. **Soporta imagen O video** -- el selector usa
+     `PickVisualMedia.ImageAndVideo` (antes solo existía selección de imagen en todo
+     el proyecto) y detecta el tipo real por MIME (`contentResolver.getType`), no por
+     extensión. Un video se sube igual que una imagen a través de
+     `ImageKitClient.upload()` (ya era genérico, no hacía falta tocarlo) y se
+     previsualiza con un ícono (no hay librería de miniaturas de video en el
+     proyecto, y agregar una era más de lo que este pendiente pedía).
+  2. **Permite editar un slide existente** (tocar la tarjeta o el ícono de lápiz),
+     no solo crear/borrar -- si Admin/Staff elige un archivo nuevo al editar, el
+     archivo viejo de ImageKit se borra DESPUÉS de que el nuevo suba con éxito (para
+     no quedar sin ningún archivo si la subida fallara a mitad de camino).
+- **Cableado**: `Routes.STAFF_MANAGE_HERO_SLIDES` / `Routes.ADMIN_MANAGE_HERO_SLIDES`
+  (`StaffNavGraph.kt`, `AdminNavGraph.kt`), entrada nueva en `ServiceCatalog.kt` para
+  los roles STAFF y ADMIN (grupo "Institucional"/"Administración"), y
+  `AppContainer.heroSlideRepository`. Strings nuevas en español
+  (`values/strings.xml`) e inglés (`values-en/strings.xml`):
+  `service_manage_hero`, `manage_hero_new`, `manage_hero_edit`, `manage_hero_empty`,
+  `manage_hero_subtitle`, `manage_hero_cta_label`, `manage_hero_cta_href`,
+  `manage_hero_order_label`, `manage_hero_media_hint`.
+- **No se tocó `firestore.rules`**: la colección `hero_slides` y su regla
+  (`allow create, update, delete: if isStaffOrAdmin()`) ya existían desde el punto 35
+  y ya cubren lo que esta pantalla necesita.
+
+**Verificado**: `./gradlew compileDebugKotlin` exitoso (BUILD SUCCESSFUL, sin errores
+de compilación en los archivos nuevos ni en los modificados).
+
+**Pendiente para la próxima sesión**: probar la pantalla en un emulador/dispositivo
+real (crear un slide de video de verdad y confirmar que se ve bien en el hero del
+sitio web); considerar agregar una miniatura real de video en vez del ícono genérico
+si se necesita mejor UX.

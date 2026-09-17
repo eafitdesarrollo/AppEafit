@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.SupervisedUserCircle
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.ui.graphics.vector.ImageVector
 import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.domain.model.Role
@@ -46,11 +47,13 @@ object ServiceCatalog {
         )
         Role.STAFF -> listOf(
             ServiceEntry(Icons.Filled.ContactMail, R.string.service_directory, Routes.STAFF_DIRECTORY, R.string.service_group_institutional),
-            ServiceEntry(Icons.Filled.Campaign, R.string.service_manage_announcements, Routes.STAFF_MANAGE_ANNOUNCEMENTS, R.string.service_group_institutional)
+            ServiceEntry(Icons.Filled.Campaign, R.string.service_manage_announcements, Routes.STAFF_MANAGE_ANNOUNCEMENTS, R.string.service_group_institutional),
+            ServiceEntry(Icons.Filled.ViewCarousel, R.string.service_manage_hero, Routes.STAFF_MANAGE_HERO_SLIDES, R.string.service_group_institutional)
         )
         Role.ADMIN -> listOf(
             ServiceEntry(Icons.Filled.SupervisedUserCircle, R.string.service_manage_users, Routes.ADMIN_MANAGE_USERS, R.string.service_group_admin),
             ServiceEntry(Icons.Filled.Campaign, R.string.service_manage_content, Routes.ADMIN_MANAGE_CONTENT, R.string.service_group_admin),
+            ServiceEntry(Icons.Filled.ViewCarousel, R.string.service_manage_hero, Routes.ADMIN_MANAGE_HERO_SLIDES, R.string.service_group_admin),
             ServiceEntry(Icons.AutoMirrored.Filled.Send, R.string.service_broadcast, Routes.ADMIN_BROADCAST, R.string.service_group_admin),
             ServiceEntry(Icons.Filled.NotificationsActive, R.string.service_stats, Routes.ADMIN_STATS, R.string.service_group_admin)
         )
