@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 data class ProfileEditUiState(
     val isSaving: Boolean = false,
@@ -36,12 +35,17 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             var photoUrl = ""
             if (photoUri != null) {
-                val uploadResult = runCatching {
-                    val ref = container.storage.reference.child("profile_photos/$uid.jpg")
-                    ref.putFile(photoUri).await()
-                    ref.downloadUrl.await().toString()
-                }
-                uploadResult.onSuccess { photoUrl = it }
+                // 2026-09-17: reemplazo temporal de Firebase Storage (ver ImageKitClient y
+                // BITACORA). useUniqueFileName=false + mismo folder/nombre por uid hace que
+                // ImageKit sobreescriba la foto anterior de este usuario en el mismo lugar
+                // (nunca queda una foto vieja huérfana al cambiarla).
+                val uploadResult = container.imageKitClient.upload(
+                    uri = photoUri,
+                    folder = "appeafit/profile_photos",
+                    fileName = "$uid.jpg",
+                    useUniqueFileName = false
+                )
+                uploadResult.onSuccess { photoUrl = it.url }
                     .onFailure {
                         _editState.update { s -> s.copy(isSaving = false, errorMessage = "No se pudo subir la foto") }
                         return@launch

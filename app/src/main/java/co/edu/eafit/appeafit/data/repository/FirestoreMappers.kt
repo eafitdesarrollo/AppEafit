@@ -42,6 +42,7 @@ fun DocumentSnapshot.toNewsItem(): NewsItem = NewsItem(
     category = getString("category").orEmpty(),
     body = getString("body").orEmpty(),
     imageUrl = getString("imageUrl").orEmpty(),
+    imageFileId = getString("imageFileId").orEmpty(),
     authorId = getString("authorId").orEmpty(),
     publishedAt = getLong("publishedAt") ?: 0L
 )
@@ -51,6 +52,7 @@ fun NewsItem.toMap(): Map<String, Any?> = mapOf(
     "category" to category,
     "body" to body,
     "imageUrl" to imageUrl,
+    "imageFileId" to imageFileId,
     "authorId" to authorId,
     "publishedAt" to publishedAt
 )

@@ -2,6 +2,7 @@ package co.edu.eafit.appeafit.core.di
 
 import android.content.Context
 import co.edu.eafit.appeafit.core.connectivity.ConnectivityObserver
+import co.edu.eafit.appeafit.core.imagekit.ImageKitClient
 import co.edu.eafit.appeafit.data.local.AppDatabase
 import co.edu.eafit.appeafit.data.repository.AttendanceRepository
 import co.edu.eafit.appeafit.data.repository.AuthRepository
@@ -31,11 +32,14 @@ class AppContainer(context: Context) {
     val storage: FirebaseStorage = FirebaseStorage.getInstance()
     private val database: AppDatabase = AppDatabase.getInstance(context)
 
+    // 2026-09-17: reemplazo temporal de Firebase Storage (ver ImageKitClient y BITACORA).
+    val imageKitClient = ImageKitClient(context.applicationContext)
+
     val connectivityObserver = ConnectivityObserver(context)
 
     val authRepository = AuthRepository(auth)
     val userRepository = UserRepository(firestore, database.userDao())
-    val newsRepository = NewsRepository(firestore, database.newsDao())
+    val newsRepository = NewsRepository(firestore, database.newsDao(), imageKitClient)
     val courseRepository = CourseRepository(firestore, database.courseDao(), database.enrollmentDao())
     val gradeRepository = GradeRepository(firestore, database.gradeDao())
     val calendarRepository = CalendarRepository(firestore, database.calendarEventDao())

@@ -345,7 +345,10 @@ usar esta lista como backlog priorizado.
   Agregar exención) o agregarla al archivo de índices primero.
 - **Reglas de Storage** (`storage.rules`): bloqueado porque Firebase ya no tiene plan
   gratuito para Storage — requiere que el cliente active facturación primero. Decisión
-  2026-09-13: esperar a que EAFIT pague la cuenta de Firebase.
+  2026-09-13: esperar a que EAFIT pague la cuenta de Firebase. **2026-09-17**: mientras
+  tanto se conectó ImageKit.io como reemplazo temporal de solo imágenes (fotos de
+  perfil, imágenes de anuncios) — ver punto 33 de la sección 8 para el detalle
+  completo y los pasos exactos para revertir a Firebase Storage cuando se pague.
 
 ### Seguimiento de seguridad — cuenta de servicio usada para el deploy del 2026-09-13
 Para poder desplegar `firestore.rules` sin una terminal interactiva disponible, se creó
@@ -1397,3 +1400,110 @@ y `admin.demo` (además de `estudiante.demo` y `profesor.demo` ya probados en el
   (índices de Firestore por CLI, Storage rules bloqueadas por facturación, límite de
   renovaciones de préstamos, etc.) más el pendiente nuevo del punto 31 sobre la app de
   producción sin huella SHA registrada.
+
+### 2026-09-17 — Santiago Guerrero Parrado
+
+**33. Reemplazo TEMPORAL de Firebase Storage por ImageKit.io mientras el cliente paga
+el plan Blaze, para que la app se vea completa con imágenes reales (fotos de perfil,
+imágenes de anuncios) en vez de recuadros vacíos.**
+
+- **Por qué**: Storage de Firebase sigue bloqueado (ver sección 6, "Reglas de
+  Storage") porque Firebase ya no tiene plan gratuito para Storage y el cliente
+  todavía no ha activado facturación. Mientras tanto, para que se le pueda mostrar al
+  cliente una app con contenido visual completo (no cajas grises vacías donde
+  debería haber una foto), se conectó una cuenta gratuita de **ImageKit.io** (20GB de
+  almacenamiento + 20GB de transferencia al mes, se renueva cada mes) como reemplazo
+  de solo lectura/escritura de imágenes.
+- **Cuenta creada**: `eafitdesarrollo@gmail.com` en ImageKit.io (el usuario/cliente la
+  creó directamente, yo solo configuré las claves con Claude for Chrome una vez
+  registrada). ImageKit ID de la cuenta: `eafit`. URL-endpoint:
+  `https://ik.imagekit.io/eafit`.
+- **Archivo nuevo**: `core/imagekit/ImageKitClient.kt` — sube (`upload()`) y borra
+  (`delete()`) archivos contra la API REST de ImageKit usando OkHttp (dependencia
+  nueva, ver `libs.versions.toml`/`app/build.gradle.kts`).
+  - **Decisión de seguridad, ya documentada como riesgo aceptado**: ImageKit exige
+    firmar cada subida (HMAC-SHA1 de `token+expire` con la clave privada de la
+    cuenta). Normalmente esa firma se genera en un backend para no exponer la clave
+    privada, pero este proyecto no tiene backend propio (solo Firebase
+    Auth/Firestore, sin Cloud Functions). La clave privada quedó **embebida en el
+    código del cliente** (`ImageKitClient.PRIVATE_KEY`) para poder firmar ahí mismo
+    — mismo nivel de riesgo que ya se acepta en este proyecto para el QR del carnet
+    falsificable (sección 6). Aceptable para esta etapa de demo con 4 cuentas de
+    prueba; **si este proveedor se usara en producción real, la firma debe moverse a
+    un backend**, no seguir embebida en el APK.
+  - La clave pública (`public_...`) sí es segura de exponer (equivalente a un API key
+    de Firebase); solo la privada (`private_...`) es el riesgo aceptado.
+- **Fotos de perfil** (`ui/profile/ProfileViewModel.kt`): reemplazado el upload a
+  Firebase Storage por `imageKitClient.upload(folder="appeafit/profile_photos",
+  fileName="$uid.jpg", useUniqueFileName=false)`. Con nombre fijo por usuario y
+  `useUniqueFileName=false`, ImageKit **sobreescribe** la foto anterior del mismo
+  usuario en el mismo lugar en vez de crear un archivo nuevo — igual que el
+  comportamiento anterior con Firebase Storage, así que nunca queda una foto vieja
+  huérfana cuando alguien cambia su foto.
+- **Imágenes de anuncios** (`ui/staff/ManageAnnouncementsScreen.kt`): se agregó un
+  selector de imagen (antes no existía NINGÚN campo de imagen en el diálogo de
+  "nuevo anuncio", por eso todos los anuncios se veían sin foto). Cada imagen nueva
+  se sube a `appeafit/news` con `useUniqueFileName=true` (nombre único, no hay slot
+  fijo como en perfil) y se guarda tanto la URL como el `fileId` que devuelve
+  ImageKit.
+  - **Modelo de datos**: `NewsItem`/`CachedNewsEntity` ganaron el campo
+    `imageFileId` (además del `imageUrl` que ya existía) — Room subió de v2 a v3
+    (`fallbackToDestructiveMigration`, mismo criterio ya documentado en el punto 27).
+    `FirestoreMappers.kt` actualizado para leer/escribir ese campo.
+  - **Cumpliendo la regla permanente de esta bitácora ("lo que se borra se borra por
+    completo")**: `NewsRepository.delete()` ahora recibe el `NewsItem` completo (no
+    solo el id) y, si tiene `imageFileId`, primero llama a
+    `imageKitClient.delete(fileId)` para borrar la imagen de ImageKit, y solo
+    después borra el documento de Firestore. **Verificado en vivo**: se publicó un
+    anuncio de prueba con imagen desde la app (rol Administrativo/Staff), se
+    confirmó en Firestore que quedó con `imageUrl`/`imageFileId` reales de ImageKit,
+    se borró desde la app, y se confirmó con una petición directa a la API de
+    ImageKit (`GET /v1/files/{fileId}/details`) que el archivo devuelve
+    `404 The requested file does not exist` — es decir, se borra de verdad, no solo
+    de la lista de anuncios.
+- **Imágenes de prueba/demo agregadas** (para que la app no se vea vacía al
+  mostrársela al cliente): se diseñaron y subieron 2 imágenes de portada (estilo
+  navy/azul EAFIT, coherente con el rediseño visual de esta bitácora) para los 2
+  anuncios institucionales que ya existían de antes y estaban sin imagen:
+  - `news/RA7pSlUStir7Kkt6tXTD` ("Actualización de horarios de biblioteca") →
+    `https://ik.imagekit.io/eafit/appeafit/news/news_biblioteca_horarios.jpg`
+    (`fileId: 6aac15d2ead997d09ab0163c`).
+  - `news/RhWzeSJ8Sgsl1poVkBJ0` ("Bienvenida al semestre 2026-2") →
+    `https://ik.imagekit.io/eafit/appeafit/news/news_bienvenida_semestre.jpg`
+    (`fileId: 6aac1902ead997d09ad6a2f8`).
+  - Estas dos actualizaciones se hicieron directamente contra la API REST de
+    Firestore (con un token de `admin.demo`, que sí tiene permiso de `update` sobre
+    `news` según las reglas vigentes), no cambian ninguna regla de seguridad ni
+    tocan datos de usuarios reales.
+- **Verificado end-to-end en el emulador** (los 3 flujos, tras reinstalar el APK
+  actualizado): (1) Home/EAFIT News muestra las 2 imágenes reales en vez de cajas
+  grises; (2) como Administrativo: crear anuncio nuevo con imagen desde la galería
+  → aparece con su miniatura en "Manage announcements" → se borra → imagen
+  confirmada eliminada de ImageKit (404); (3) como Administrativo: editar foto de
+  perfil → sube a ImageKit → se ve la foto nueva como avatar circular en el
+  perfil.
+- **`./gradlew compileDebugKotlin`/`assembleDebug` exitosos**; APK reinstalado con
+  `adb install -r`.
+- **Cuándo revertir a Firebase Storage**: en cuanto el cliente active el plan Blaze
+  de Firebase (ver sección 6, "Reglas de Storage"), hay que: (a) desplegar
+  `storage.rules` (ya escrito, solo pendiente de plan pagado); (b) volver a apuntar
+  `ProfileViewModel` y `ManageAnnouncementsScreen`/`NewsRepository` a
+  `container.storage` (Firebase Storage, que se dejó intacto y sin usar en
+  `AppContainer.kt` justo para este momento) en vez de `container.imageKitClient`;
+  (c) decidir qué hacer con las imágenes ya subidas a ImageKit (dejarlas ahí
+  indefinidamente sirviendo desde `ik.imagekit.io`, o migrarlas a Firebase Storage)
+  — no es obligatorio migrarlas, ImageKit puede seguir sirviendo esas URLs
+  específicas sin costo mientras se mantenga la cuenta gratuita; (d) opcionalmente
+  borrar la cuenta de ImageKit y las claves embebidas del código si ya no se va a
+  usar más.
+- **Recordatorio de la regla permanente de esta bitácora** (pedido explícito de
+  Santiago Guerrero Parrado, vigente desde el punto 29): cualquier función de
+  borrado, existente o futura, debe borrar el dato por completo de donde esté
+  guardado — incluyendo el proveedor de imágenes que esté activo en ese momento
+  (ImageKit ahora, Firebase Storage cuando se revierta). Este punto (33) es un
+  ejemplo concreto de aplicar esa regla a un proveedor nuevo.
+
+**Pendiente para la próxima sesión**: monitorear el uso de la cuota gratuita de
+ImageKit (20GB/mes) desde `imagekit.io/dashboard/usage-analytics` a medida que se
+agreguen más imágenes de prueba; revertir a Firebase Storage según los pasos del
+punto anterior en cuanto el cliente pague el plan Blaze.

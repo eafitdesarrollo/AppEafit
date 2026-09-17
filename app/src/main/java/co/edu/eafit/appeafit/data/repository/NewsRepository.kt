@@ -1,5 +1,6 @@
 package co.edu.eafit.appeafit.data.repository
 
+import co.edu.eafit.appeafit.core.imagekit.ImageKitClient
 import co.edu.eafit.appeafit.data.local.dao.NewsDao
 import co.edu.eafit.appeafit.data.local.entity.CachedNewsEntity
 import co.edu.eafit.appeafit.domain.model.NewsItem
@@ -13,10 +14,11 @@ private const val NEWS_COLLECTION = "news"
 
 class NewsRepository(
     private val firestore: FirebaseFirestore,
-    private val newsDao: NewsDao
+    private val newsDao: NewsDao,
+    private val imageKitClient: ImageKitClient
 ) {
-    private fun CachedNewsEntity.toDomain() = NewsItem(id, title, category, body, imageUrl, authorId, publishedAt)
-    private fun NewsItem.toEntity() = CachedNewsEntity(id, title, category, body, imageUrl, authorId, publishedAt)
+    private fun CachedNewsEntity.toDomain() = NewsItem(id, title, category, body, imageUrl, imageFileId, authorId, publishedAt)
+    private fun NewsItem.toEntity() = CachedNewsEntity(id, title, category, body, imageUrl, imageFileId, authorId, publishedAt)
 
     fun observeCached(): Flow<List<NewsItem>> = newsDao.observeAll().map { list -> list.map { it.toDomain() } }
 
@@ -38,8 +40,17 @@ class NewsRepository(
         Unit
     }
 
-    suspend fun delete(id: String): Result<Unit> = runCatching {
-        firestore.collection(NEWS_COLLECTION).document(id).delete().await()
+    /**
+     * Borra el anuncio de Firestore Y su imagen en ImageKit (si tiene una) -- borrar algo
+     * en este proyecto debe borrarlo por completo, no dejar la imagen huérfana en el
+     * proveedor de almacenamiento. Se recibe el [NewsItem] completo (no solo el id) para
+     * no tener que hacer una lectura extra a Firestore solo para obtener el imageFileId.
+     */
+    suspend fun delete(item: NewsItem): Result<Unit> = runCatching {
+        if (item.imageFileId.isNotBlank()) {
+            imageKitClient.delete(item.imageFileId)
+        }
+        firestore.collection(NEWS_COLLECTION).document(item.id).delete().await()
         Unit
     }
 }

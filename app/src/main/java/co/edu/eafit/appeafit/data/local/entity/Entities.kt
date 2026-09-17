@@ -54,6 +54,7 @@ data class CachedNewsEntity(
     val category: String,
     val body: String,
     val imageUrl: String,
+    val imageFileId: String,
     val authorId: String,
     val publishedAt: Long
 )

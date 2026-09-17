@@ -30,11 +30,12 @@ import co.edu.eafit.appeafit.data.local.entity.SyncStateEntity
         SyncStateEntity::class
     ],
     // v2 (2026-09-15): CachedGradeEntity agregó el campo `corte` (ver domain/model/Grade.kt).
+    // v3 (2026-09-17): CachedNewsEntity agregó el campo `imageFileId` (ver NewsItem.kt).
     // Sin migración explícita: fallbackToDestructiveMigration(true) borra y recrea el
     // caché local completo en el primer arranque tras la actualización (todos los
     // repositorios re-sincronizan solos desde Firestore en su próximo refresh, así que
     // no hay pérdida de datos reales, solo un refresh extra la primera vez).
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
