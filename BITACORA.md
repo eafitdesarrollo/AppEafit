@@ -1372,3 +1372,28 @@ nunca se borraba al cerrar sesión.**
 **Pendiente para la próxima sesión**: falta probar Administrativo y Admin (ahora que el
 login fresco funciona para cualquier cuenta), incluyendo el envío de una notificación
 de broadcast como `admin.demo`.
+
+**32. Se completó la prueba de los 4 roles en el emulador, incluyendo el flujo de
+notificaciones de punta a punta.** Login fresco confirmado para `administrativo.demo`
+y `admin.demo` (además de `estudiante.demo` y `profesor.demo` ya probados en el punto
+31) — el fix de la huella SHA aplica a nivel de la app completa, no por cuenta.
+
+- **Administrativo (`Staff`)**: Home con "Institutional directory"/"Manage
+  announcements", notificaciones sin error ("You're all caught up").
+- **Admin**: Home con "Manage users"/"Manage content"/"Send notification". Se probó el
+  envío real de un broadcast a "Everyone" (título "Prueba", mensaje "Verificando") →
+  el botón cambió a "Sent ✓". Se volvió a abrir Notificaciones del propio Admin y el
+  broadcast apareció de inmediato con el punto naranja de "no leído"; al tocarlo pasó a
+  texto normal (sin negrita, sin punto) confirmando que el `POST` a `notifications` y
+  el `write` a `notifications/{id}/reads/{adminUid}` funcionan correctamente con las
+  reglas actuales — es decir, el fix del punto 30 (`match /{path=**}/reads/{uid}`)
+  cubre tanto la lectura por `collectionGroup` como la escritura del marcador de
+  leído.
+- Con esto, los 4 roles (Estudiante, Profesor, Administrativo, Admin) quedan
+  verificados end-to-end en el emulador: login, Home con sus servicios propios, y
+  Notificaciones (lectura + marcar como leído) sin `PERMISSION_DENIED`.
+- **No queda pendiente ninguna prueba de rol para la próxima sesión** de las que se
+  venían arrastrando; los pendientes reales son los ya anotados en la sección 6
+  (índices de Firestore por CLI, Storage rules bloqueadas por facturación, límite de
+  renovaciones de préstamos, etc.) más el pendiente nuevo del punto 31 sobre la app de
+  producción sin huella SHA registrada.
