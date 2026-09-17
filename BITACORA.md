@@ -1498,7 +1498,7 @@ imágenes de anuncios) en vez de recuadros vacíos.**
     rama `main`, este commit en adelante): la clave privada completa de la cuenta
     de ImageKit (`eafitdesarrollo@gmail.com`, ImageKit ID `eafit`), en
     `app/src/main/java/co/edu/eafit/appeafit/core/imagekit/ImageKitClient.kt`,
-    constante `PRIVATE_KEY` (empieza con `private_nYm6...`). Con esa clave se puede
+    constante `PRIVATE_KEY`. Con esa clave se puede
     firmar subidas y también **borrar cualquier archivo** de esa cuenta de
     ImageKit vía su API — no da acceso a Firebase ni a ningún otro sistema de este
     proyecto, solo a esa cuenta de ImageKit.
