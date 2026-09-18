@@ -1,7 +1,9 @@
 package co.edu.eafit.appeafit.data.repository
 
+import co.edu.eafit.appeafit.domain.model.Loan
 import co.edu.eafit.appeafit.domain.model.MAX_LOAN_RENEWALS
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
 
@@ -18,6 +20,31 @@ class LoanRepository(private val firestore: FirebaseFirestore) {
             .await()
             .documents
             .map { it.toLoan() }
+    }
+
+    /** Todos los préstamos, para el panel de Administrativo (no solo los de un estudiante). */
+    suspend fun listAll(): Result<List<Loan>> = runCatching {
+        firestore.collection(LOANS_COLLECTION)
+            .orderBy("loanedAt", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .map { it.toLoan() }
+    }
+
+    suspend fun create(loan: Loan): Result<Unit> = runCatching {
+        firestore.collection(LOANS_COLLECTION).add(loan.toMap()).await()
+        Unit
+    }
+
+    suspend fun markReturned(loanId: String): Result<Unit> = runCatching {
+        firestore.collection(LOANS_COLLECTION).document(loanId).update("returned", true).await()
+        Unit
+    }
+
+    suspend fun delete(loanId: String): Result<Unit> = runCatching {
+        firestore.collection(LOANS_COLLECTION).document(loanId).delete().await()
+        Unit
     }
 
     /**

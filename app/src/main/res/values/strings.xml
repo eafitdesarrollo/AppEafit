@@ -89,6 +89,11 @@
     <string name="service_directory">Directorio institucional</string>
     <string name="service_manage_announcements">Gestionar anuncios</string>
     <string name="service_manage_hero">Gestionar hero del sitio web</string>
+    <string name="service_manage_courses">Gestionar cursos</string>
+    <string name="service_manage_enrollments">Gestionar matrículas</string>
+    <string name="service_manage_calendar">Gestionar calendario académico</string>
+    <string name="service_manage_loans">Gestionar préstamos</string>
+    <string name="service_contact_messages">Buzón de contacto</string>
 
     <!-- Admin services -->
     <string name="service_manage_users">Gestión de usuarios</string>
@@ -174,6 +179,45 @@
     <string name="manage_hero_cta_href">Enlace del botón, ej: /admisiones (opcional)</string>
     <string name="manage_hero_order_label">Orden</string>
     <string name="manage_hero_media_hint">Puedes elegir una foto o un video. Recomendado: proporción 16:9 (igual que el hero del sitio). El video se reproduce en loop, silenciado, y cambia de slide cada 10 segundos igual que una foto.</string>
+
+    <!-- Manage courses (staff): registraduría -->
+    <string name="manage_courses_new">Nuevo curso</string>
+    <string name="manage_courses_edit">Editar curso</string>
+    <string name="manage_courses_empty">No hay cursos creados todavía</string>
+    <string name="manage_courses_name">Nombre del curso</string>
+    <string name="manage_courses_code">Código</string>
+    <string name="manage_courses_credits">Créditos</string>
+    <string name="manage_courses_professor">Profesor</string>
+    <string name="manage_courses_no_professor">Sin profesor asignado</string>
+    <string name="manage_courses_no_professors_available">No hay profesores registrados todavía</string>
+    <string name="manage_courses_schedule">Horario</string>
+    <string name="manage_courses_add_slot">Agregar horario</string>
+
+    <!-- Manage enrollments (staff): registraduría -->
+    <string name="manage_enrollments_pick_course">Elige un curso</string>
+    <string name="manage_enrollments_pick_course_hint">Elige un curso arriba para ver y gestionar sus estudiantes matriculados</string>
+    <string name="manage_enrollments_empty">Este curso todavía no tiene estudiantes matriculados</string>
+    <string name="manage_enrollments_add">Matricular estudiante</string>
+    <string name="manage_enrollments_no_students_available">Escribe para buscar un estudiante por nombre o correo</string>
+
+    <!-- Manage calendar (staff): calendario académico institucional -->
+    <string name="manage_calendar_new">Nuevo evento</string>
+    <string name="manage_calendar_edit">Editar evento</string>
+    <string name="manage_calendar_empty">No hay eventos en el calendario académico</string>
+    <string name="manage_calendar_title_label">Título del evento</string>
+    <string name="manage_calendar_description_label">Descripción (opcional)</string>
+
+    <!-- Manage loans (staff): biblioteca -->
+    <string name="manage_loans_new">Nuevo préstamo</string>
+    <string name="manage_loans_empty">No hay préstamos registrados</string>
+    <string name="manage_loans_item_label">Título del material</string>
+    <string name="manage_loans_student_label">Buscar estudiante por nombre o correo</string>
+    <string name="manage_loans_due">Vence: %1$s</string>
+    <string name="manage_loans_returned">Devuelto</string>
+
+    <!-- Contact messages (staff): buzón del formulario de contacto del sitio web -->
+    <string name="contact_messages_empty">No hay mensajes de contacto todavía</string>
+    <string name="contact_messages_resolved">Atendido</string>
 
     <!-- Image upload hints: guía de tamaño recomendado al subir una foto (no es una
          validación obligatoria, solo una sugerencia para que la imagen se adapte bien

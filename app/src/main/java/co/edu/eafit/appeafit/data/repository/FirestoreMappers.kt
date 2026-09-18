@@ -4,6 +4,7 @@ import co.edu.eafit.appeafit.domain.model.AppNotification
 import co.edu.eafit.appeafit.domain.model.AttendanceRecord
 import co.edu.eafit.appeafit.domain.model.AttendanceSession
 import co.edu.eafit.appeafit.domain.model.CalendarEvent
+import co.edu.eafit.appeafit.domain.model.ContactMessage
 import co.edu.eafit.appeafit.domain.model.Course
 import co.edu.eafit.appeafit.domain.model.Grade
 import co.edu.eafit.appeafit.domain.model.HeroSlide
@@ -148,6 +149,15 @@ fun DocumentSnapshot.toLoan(): Loan = Loan(
     renewalCount = getLong("renewalCount")?.toInt() ?: 0
 )
 
+fun Loan.toMap(): Map<String, Any?> = mapOf(
+    "studentId" to studentId,
+    "itemTitle" to itemTitle,
+    "loanedAt" to loanedAt,
+    "dueAt" to dueAt,
+    "returned" to returned,
+    "renewalCount" to renewalCount
+)
+
 fun DocumentSnapshot.toAppNotification(): AppNotification = AppNotification(
     id = id,
     title = getString("title").orEmpty(),
@@ -163,6 +173,22 @@ fun DocumentSnapshot.toCalendarEvent(): CalendarEvent = CalendarEvent(
     title = getString("title").orEmpty(),
     description = getString("description").orEmpty(),
     date = getLong("date") ?: 0L
+)
+
+fun CalendarEvent.toMap(): Map<String, Any?> = mapOf(
+    "title" to title,
+    "description" to description,
+    "date" to date
+)
+
+fun DocumentSnapshot.toContactMessage(): ContactMessage = ContactMessage(
+    id = id,
+    name = getString("name").orEmpty(),
+    email = getString("email").orEmpty(),
+    phone = getString("phone").orEmpty(),
+    message = getString("message").orEmpty(),
+    createdAt = getLong("createdAt") ?: 0L,
+    resolved = getBoolean("resolved") ?: false
 )
 
 @Suppress("UNCHECKED_CAST")

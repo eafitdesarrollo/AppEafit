@@ -7,6 +7,7 @@ import co.edu.eafit.appeafit.data.local.AppDatabase
 import co.edu.eafit.appeafit.data.repository.AttendanceRepository
 import co.edu.eafit.appeafit.data.repository.AuthRepository
 import co.edu.eafit.appeafit.data.repository.CalendarRepository
+import co.edu.eafit.appeafit.data.repository.ContactMessageRepository
 import co.edu.eafit.appeafit.data.repository.CourseRepository
 import co.edu.eafit.appeafit.data.repository.GradeRepository
 import co.edu.eafit.appeafit.data.repository.HeroSlideRepository
@@ -50,6 +51,7 @@ class AppContainer(context: Context) {
     val attendanceRepository = AttendanceRepository(firestore)
     val settingsRepository = SettingsRepository(context.applicationContext)
     val teacherEvaluationRepository = TeacherEvaluationRepository(firestore)
+    val contactMessageRepository = ContactMessageRepository(firestore)
 
     /**
      * El caché local de Room no se borraba al cerrar sesión, así que cambiar de cuenta en

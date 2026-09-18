@@ -89,6 +89,11 @@
     <string name="service_directory">Institutional directory</string>
     <string name="service_manage_announcements">Manage announcements</string>
     <string name="service_manage_hero">Manage website hero</string>
+    <string name="service_manage_courses">Manage courses</string>
+    <string name="service_manage_enrollments">Manage enrollments</string>
+    <string name="service_manage_calendar">Manage academic calendar</string>
+    <string name="service_manage_loans">Manage loans</string>
+    <string name="service_contact_messages">Contact inbox</string>
 
     <!-- Admin services -->
     <string name="service_manage_users">Manage users</string>
@@ -174,6 +179,45 @@
     <string name="manage_hero_cta_href">Button link, e.g. /admisiones (optional)</string>
     <string name="manage_hero_order_label">Order</string>
     <string name="manage_hero_media_hint">You can choose a photo or a video. Recommended: 16:9 ratio (same as the website hero). Video loops muted and the slide still advances every 10 seconds just like a photo.</string>
+
+    <!-- Manage courses (staff): registrar's office -->
+    <string name="manage_courses_new">New course</string>
+    <string name="manage_courses_edit">Edit course</string>
+    <string name="manage_courses_empty">No courses created yet</string>
+    <string name="manage_courses_name">Course name</string>
+    <string name="manage_courses_code">Code</string>
+    <string name="manage_courses_credits">Credits</string>
+    <string name="manage_courses_professor">Professor</string>
+    <string name="manage_courses_no_professor">No professor assigned</string>
+    <string name="manage_courses_no_professors_available">No professors registered yet</string>
+    <string name="manage_courses_schedule">Schedule</string>
+    <string name="manage_courses_add_slot">Add time slot</string>
+
+    <!-- Manage enrollments (staff): registrar's office -->
+    <string name="manage_enrollments_pick_course">Pick a course</string>
+    <string name="manage_enrollments_pick_course_hint">Pick a course above to view and manage its enrolled students</string>
+    <string name="manage_enrollments_empty">This course has no enrolled students yet</string>
+    <string name="manage_enrollments_add">Enroll student</string>
+    <string name="manage_enrollments_no_students_available">Type to search a student by name or email</string>
+
+    <!-- Manage calendar (staff): institutional academic calendar -->
+    <string name="manage_calendar_new">New event</string>
+    <string name="manage_calendar_edit">Edit event</string>
+    <string name="manage_calendar_empty">No events on the academic calendar</string>
+    <string name="manage_calendar_title_label">Event title</string>
+    <string name="manage_calendar_description_label">Description (optional)</string>
+
+    <!-- Manage loans (staff): library -->
+    <string name="manage_loans_new">New loan</string>
+    <string name="manage_loans_empty">No loans registered</string>
+    <string name="manage_loans_item_label">Item title</string>
+    <string name="manage_loans_student_label">Search a student by name or email</string>
+    <string name="manage_loans_due">Due: %1$s</string>
+    <string name="manage_loans_returned">Returned</string>
+
+    <!-- Contact messages (staff): website contact form inbox -->
+    <string name="contact_messages_empty">No contact messages yet</string>
+    <string name="contact_messages_resolved">Resolved</string>
 
     <!-- Image upload hints: recommended-size guidance shown when uploading a photo
          (not a hard requirement, just a suggestion so the image fits well where it's

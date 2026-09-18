@@ -9,11 +9,14 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.ContactMail
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HowToReg
+import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.RateReview
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -46,9 +49,14 @@ object ServiceCatalog {
             ServiceEntry(Icons.Filled.Campaign, R.string.service_announcements, Routes.PROFESSOR_ANNOUNCEMENTS, R.string.service_group_teaching)
         )
         Role.STAFF -> listOf(
+            ServiceEntry(Icons.Filled.School, R.string.service_manage_courses, Routes.STAFF_MANAGE_COURSES, R.string.service_group_academic),
+            ServiceEntry(Icons.Filled.HowToReg, R.string.service_manage_enrollments, Routes.STAFF_MANAGE_ENROLLMENTS, R.string.service_group_academic),
+            ServiceEntry(Icons.Filled.EditCalendar, R.string.service_manage_calendar, Routes.STAFF_MANAGE_CALENDAR, R.string.service_group_academic),
+            ServiceEntry(Icons.AutoMirrored.Filled.MenuBook, R.string.service_manage_loans, Routes.STAFF_MANAGE_LOANS, R.string.service_group_library),
             ServiceEntry(Icons.Filled.ContactMail, R.string.service_directory, Routes.STAFF_DIRECTORY, R.string.service_group_institutional),
             ServiceEntry(Icons.Filled.Campaign, R.string.service_manage_announcements, Routes.STAFF_MANAGE_ANNOUNCEMENTS, R.string.service_group_institutional),
-            ServiceEntry(Icons.Filled.ViewCarousel, R.string.service_manage_hero, Routes.STAFF_MANAGE_HERO_SLIDES, R.string.service_group_institutional)
+            ServiceEntry(Icons.Filled.ViewCarousel, R.string.service_manage_hero, Routes.STAFF_MANAGE_HERO_SLIDES, R.string.service_group_institutional),
+            ServiceEntry(Icons.Filled.MailOutline, R.string.service_contact_messages, Routes.STAFF_CONTACT_MESSAGES, R.string.service_group_institutional)
         )
         Role.ADMIN -> listOf(
             ServiceEntry(Icons.Filled.SupervisedUserCircle, R.string.service_manage_users, Routes.ADMIN_MANAGE_USERS, R.string.service_group_admin),

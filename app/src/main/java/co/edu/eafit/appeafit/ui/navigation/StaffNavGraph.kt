@@ -5,9 +5,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.domain.model.User
+import co.edu.eafit.appeafit.ui.staff.ContactMessagesScreen
 import co.edu.eafit.appeafit.ui.staff.DirectoryScreen
 import co.edu.eafit.appeafit.ui.staff.ManageAnnouncementsScreen
+import co.edu.eafit.appeafit.ui.staff.ManageCalendarScreen
+import co.edu.eafit.appeafit.ui.staff.ManageCoursesScreen
+import co.edu.eafit.appeafit.ui.staff.ManageEnrollmentsScreen
 import co.edu.eafit.appeafit.ui.staff.ManageHeroSlidesScreen
+import co.edu.eafit.appeafit.ui.staff.ManageLoansScreen
 
 fun NavGraphBuilder.staffGraph(
     container: AppContainer,
@@ -23,5 +28,20 @@ fun NavGraphBuilder.staffGraph(
     }
     composable(Routes.STAFF_MANAGE_HERO_SLIDES) {
         ManageHeroSlidesScreen(container) { navController.popBackStack() }
+    }
+    composable(Routes.STAFF_MANAGE_COURSES) {
+        ManageCoursesScreen(container) { navController.popBackStack() }
+    }
+    composable(Routes.STAFF_MANAGE_ENROLLMENTS) {
+        ManageEnrollmentsScreen(container) { navController.popBackStack() }
+    }
+    composable(Routes.STAFF_MANAGE_CALENDAR) {
+        ManageCalendarScreen(container) { navController.popBackStack() }
+    }
+    composable(Routes.STAFF_MANAGE_LOANS) {
+        ManageLoansScreen(container) { navController.popBackStack() }
+    }
+    composable(Routes.STAFF_CONTACT_MESSAGES) {
+        ContactMessagesScreen(container) { navController.popBackStack() }
     }
 }

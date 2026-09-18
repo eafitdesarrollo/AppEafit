@@ -5,6 +5,7 @@ import co.edu.eafit.appeafit.data.local.dao.EnrollmentDao
 import co.edu.eafit.appeafit.data.local.entity.CachedCourseEntity
 import co.edu.eafit.appeafit.data.local.entity.CachedEnrollmentEntity
 import co.edu.eafit.appeafit.domain.model.Course
+import co.edu.eafit.appeafit.domain.model.Enrollment
 import co.edu.eafit.appeafit.domain.model.ScheduleSlot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
@@ -109,6 +110,28 @@ class CourseRepository(
         Unit
     }
 
+    suspend fun updateCourse(course: Course): Result<Unit> = runCatching {
+        firestore.collection(COURSES_COLLECTION).document(course.id).set(course.toMap()).await()
+        Unit
+    }
+
+    /**
+     * Borra el curso y, en cascada, todas sus matrículas -- si no, quedaban
+     * matrículas "huérfanas" apuntando a un courseId que ya no existe, y
+     * `refreshForStudent` seguía intentando resolverlas contra un curso
+     * inexistente en cada sincronización.
+     */
+    suspend fun deleteCourse(courseId: String): Result<Unit> = runCatching {
+        val enrollmentDocs = firestore.collection(ENROLLMENTS_COLLECTION)
+            .whereEqualTo("courseId", courseId)
+            .get()
+            .await()
+            .documents
+        enrollmentDocs.forEach { it.reference.delete().await() }
+        firestore.collection(COURSES_COLLECTION).document(courseId).delete().await()
+        Unit
+    }
+
     suspend fun enrollStudent(studentId: String, courseId: String): Result<Unit> = runCatching {
         firestore.collection(ENROLLMENTS_COLLECTION).add(
             mapOf("studentId" to studentId, "courseId" to courseId)
@@ -116,8 +139,28 @@ class CourseRepository(
         Unit
     }
 
+    suspend fun unenroll(enrollmentId: String): Result<Unit> = runCatching {
+        firestore.collection(ENROLLMENTS_COLLECTION).document(enrollmentId).delete().await()
+        Unit
+    }
+
     suspend fun listAllCourses(): Result<List<Course>> = runCatching {
         firestore.collection(COURSES_COLLECTION).get().await().documents.map { it.toCourse() }
+    }
+
+    suspend fun listEnrollmentsForCourse(courseId: String): Result<List<Enrollment>> = runCatching {
+        firestore.collection(ENROLLMENTS_COLLECTION)
+            .whereEqualTo("courseId", courseId)
+            .get()
+            .await()
+            .documents
+            .map { doc ->
+                Enrollment(
+                    id = doc.id,
+                    studentId = doc.getString("studentId").orEmpty(),
+                    courseId = doc.getString("courseId").orEmpty()
+                )
+            }
     }
 
     suspend fun listEnrolledStudents(courseId: String): Result<List<co.edu.eafit.appeafit.domain.model.User>> = runCatching {

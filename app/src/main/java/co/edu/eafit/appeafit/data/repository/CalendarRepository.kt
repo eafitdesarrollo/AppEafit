@@ -33,4 +33,19 @@ class CalendarRepository(
         calendarEventDao.clear()
         calendarEventDao.upsertAll(events.map { it.toEntity() })
     }
+
+    suspend fun createEvent(event: CalendarEvent): Result<Unit> = runCatching {
+        firestore.collection(CALENDAR_COLLECTION).add(event.toMap()).await()
+        Unit
+    }
+
+    suspend fun updateEvent(event: CalendarEvent): Result<Unit> = runCatching {
+        firestore.collection(CALENDAR_COLLECTION).document(event.id).set(event.toMap()).await()
+        Unit
+    }
+
+    suspend fun deleteEvent(eventId: String): Result<Unit> = runCatching {
+        firestore.collection(CALENDAR_COLLECTION).document(eventId).delete().await()
+        Unit
+    }
 }
