@@ -113,6 +113,10 @@
     <string name="home_favorites">Favoritos</string>
     <string name="home_news_section">Actualidad IAFIC</string>
     <string name="home_news_empty">Todavía no hay anuncios institucionales publicados</string>
+    <string name="home_upcoming_events">Próximos eventos</string>
+    <string name="home_upcoming_events_empty">No hay eventos próximos en el calendario académico</string>
+    <string name="home_event_today">Hoy</string>
+    <string name="home_event_tomorrow">Mañana</string>
 
     <!-- Roles -->
     <string name="role_student">Estudiante</string>

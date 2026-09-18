@@ -113,6 +113,10 @@
     <string name="home_favorites">Favorites</string>
     <string name="home_news_section">IAFIC News</string>
     <string name="home_news_empty">No institutional announcements have been published yet</string>
+    <string name="home_upcoming_events">Upcoming events</string>
+    <string name="home_upcoming_events_empty">No upcoming events on the academic calendar</string>
+    <string name="home_event_today">Today</string>
+    <string name="home_event_tomorrow">Tomorrow</string>
 
     <!-- Roles -->
     <string name="role_student">Student</string>

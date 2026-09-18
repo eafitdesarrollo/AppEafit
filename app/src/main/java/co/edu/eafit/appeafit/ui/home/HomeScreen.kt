@@ -18,9 +18,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,21 +49,39 @@ import androidx.navigation.NavHostController
 import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.core.di.AppContainer
 import co.edu.eafit.appeafit.core.di.GenericViewModelFactory
+import co.edu.eafit.appeafit.domain.model.CalendarEvent
+import co.edu.eafit.appeafit.domain.model.Role
 import co.edu.eafit.appeafit.domain.model.User
+import co.edu.eafit.appeafit.ui.components.EafitCard
 import co.edu.eafit.appeafit.ui.components.GradientHeroBox
 import co.edu.eafit.appeafit.ui.components.NewsCard
 import co.edu.eafit.appeafit.ui.components.SectionHeader
 import co.edu.eafit.appeafit.ui.components.ServiceCard
 import co.edu.eafit.appeafit.ui.navigation.Routes
 import co.edu.eafit.appeafit.ui.services.ServiceCatalog
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun HomeScreen(container: AppContainer, user: User, navController: NavHostController) {
     val viewModel: HomeViewModel = viewModel(factory = GenericViewModelFactory { HomeViewModel(container) })
     val news by viewModel.news.collectAsStateWithLifecycle()
+    val upcomingEvents by viewModel.upcomingEvents.collectAsStateWithLifecycle()
     var search by remember { mutableStateOf("") }
 
     val favorites = remember(user.role) { ServiceCatalog.forRole(user.role).take(4) }
+    // Solo Estudiante y Administrativo tienen una pantalla dedicada para ver el
+    // calendario completo hoy -- Profesor y Admin todavía no, así que para ellos la
+    // sección de "Próximos eventos" se muestra sin el enlace "Ver todo".
+    val calendarRoute = remember(user.role) {
+        when (user.role) {
+            Role.STUDENT -> Routes.STUDENT_ACADEMIC_CALENDAR
+            Role.STAFF -> Routes.STAFF_MANAGE_CALENDAR
+            else -> null
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(bottom = 8.dp)) {
         GradientHeroBox {
@@ -101,6 +124,8 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
                 .background(MaterialTheme.colorScheme.background)
         ) {
             OutlinedTextField(
@@ -181,6 +206,133 @@ fun HomeScreen(container: AppContainer, user: User, navController: NavHostContro
                     androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
                 }
             }
+
+            val eventsVisible = remember { MutableTransitionState(false).apply { targetState = true } }
+            AnimatedVisibility(
+                visibleState = eventsVisible,
+                enter = fadeIn(tween(450, delayMillis = 140)) + slideInVertically(tween(450, delayMillis = 140)) { it / 5 }
+            ) {
+                Column {
+                    SectionHeader(
+                        title = stringResource(R.string.home_upcoming_events),
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        action = calendarRoute?.let { route -> { navController.navigate(route) } }
+                    )
+                    androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+                    if (upcomingEvents.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            upcomingEvents.forEach { event ->
+                                UpcomingEventRow(
+                                    event = event,
+                                    onClick = calendarRoute?.let { route -> { navController.navigate(route) } }
+                                )
+                            }
+                        }
+                    } else {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Filled.EventAvailable,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+                                Text(
+                                    stringResource(R.string.home_upcoming_events_empty),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                    androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpcomingEventRow(event: CalendarEvent, onClick: (() -> Unit)?) {
+    val today = remember {
+        Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+    val eventDay = remember(event.date) {
+        Calendar.getInstance().apply {
+            timeInMillis = event.date
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+    val dayDiff = (eventDay - today) / (24 * 60 * 60 * 1000)
+    val dayFormat = remember { SimpleDateFormat("d", Locale.getDefault()) }
+    val monthFormat = remember { SimpleDateFormat("MMM", Locale.getDefault()) }
+
+    EafitCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.small)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    dayFormat.format(Date(event.date)),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    monthFormat.format(Date(event.date)).uppercase(Locale.getDefault()),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            androidx.compose.foundation.layout.Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                if (dayDiff == 0L || dayDiff == 1L) {
+                    Text(
+                        text = if (dayDiff == 0L) stringResource(R.string.home_event_today) else stringResource(R.string.home_event_tomorrow),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Text(
+                    event.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (event.description.isNotBlank()) {
+                    Text(
+                        event.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.EventNote,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

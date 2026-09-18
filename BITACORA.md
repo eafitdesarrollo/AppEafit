@@ -1995,3 +1995,50 @@ escudo se vea notablemente más grande en ambas pantallas de splash sin
 tocar el código de `SplashScreen.kt`. Verificado de nuevo con capturas en
 ráfaga: escudo centrado y grande tanto en el splash del sistema como en
 el de Compose.
+
+---
+
+### 2026-09-18 — Santiago Guerrero Parrado
+
+**Parte E: sección "Próximos eventos" en el Home** (pedido explícito:
+*"el dasboard principal... el home, aun se ve muy basio no se que mas le
+puedas agregar para abajo despues de IAFIC News"*). El Home es una sola
+pantalla compartida por los 4 roles (`HomeScreen.kt`, invocada igual desde
+`MainScreen.kt` sin importar el rol), así que la nueva sección debía ser
+útil y con datos reales para Estudiante, Profesor, Administrativo y
+Admin, no solo para uno.
+
+Se agregó una sección **"Próximos eventos"** debajo de "Actualidad IAFIC"
+que muestra hasta 3 eventos del calendario académico institucional
+(colección compartida `calendarEvents`, la misma que ya usa
+`ManageCalendarScreen` de Administrativo para crear eventos y
+`AcademicCalendarScreen` de Estudiante para verlos) con fecha próxima
+(desde el inicio del día de hoy en adelante, ordenados ascendente). Cada
+evento se muestra en una tarjeta con un chip de día/mes, "Hoy"/"Mañana"
+cuando aplica, título y descripción truncada. Con enlace "Ver todo" que
+navega al calendario completo -- solo para Estudiante
+(`STUDENT_ACADEMIC_CALENDAR`) y Administrativo (`STAFF_MANAGE_CALENDAR`),
+los únicos roles que hoy tienen una pantalla de calendario propia;
+Profesor y Admin ven la sección igual pero sin ese enlace (no se creó
+pantalla de calendario nueva para ellos, fuera del alcance de este
+pedido).
+
+Detalles técnicos:
+- `HomeViewModel.kt`: nuevo `StateFlow<List<CalendarEvent>>` derivado de
+  `calendarRepository.observeCached()`, filtrado a `date >= inicio de hoy`
+  y limitado a 3; `refresh()` ahora también llama a
+  `calendarRepository.refresh()` (antes solo refrescaba noticias).
+- `HomeScreen.kt`: la pantalla completa **no tenía scroll** (un `Column`
+  simple sin `verticalScroll`), así que agregar contenido debajo de las
+  noticias lo habría dejado cortado por la barra de navegación inferior
+  sin forma de verlo. Se envolvió el contenido en
+  `Modifier.weight(1f).verticalScroll(rememberScrollState())`.
+
+**Verificado en el celular físico de Santiago** (conectado por USB,
+Android real, no emulador): sesión de Estudiante ya logueada mostró 2
+eventos reales de Firestore ("Semana de parciales" 22 sept, "Último día
+de retiro de materias" 7 oct), scroll funcionando, y "Ver todo" navegando
+correctamente a `AcademicCalendarScreen`. No se verificó visualmente en
+los otros 3 roles por no tener sus credenciales a mano en esa sesión del
+celular, pero la lógica es la misma para los 4 (`when (user.role)`
+exhaustivo, sin casos especiales de datos).
