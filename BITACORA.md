@@ -1700,3 +1700,162 @@ de compilación en los archivos nuevos ni en los modificados).
 real (crear un slide de video de verdad y confirmar que se ve bien en el hero del
 sitio web); considerar agregar una miniatura real de video en vez del ícono genérico
 si se necesita mejor UX.
+
+### 2026-09-18 — Santiago Guerrero Parrado
+
+**37. Funciones completas de Registraduría y Biblioteca para Administrativo
+(staff) + fusión de `JuanmaBranch` (rebranding EAFIT → IAFIC) a `main`.**
+Motivado por el pedido explícito: *"el administrativo ahora mismo en la app
+movil tiene muy pocas funciones y se ve basia la app en la version
+administrativo... investiga e implementa por completo funciones para el
+administrativo"*, y por separado: *"otro colaborador cambio cosas hizo
+cambios grandes, lo hizo sobre otra rama, es JuanmaBranch... nos equivocamos
+de universidad no es la EAFIT si no la IAFIC"*.
+
+**Parte A — Funciones nuevas para Administrativo (staff):**
+
+Antes, `ServiceCatalog.kt` solo le daba a staff 3 servicios (Directorio,
+Gestionar anuncios, Gestionar hero del sitio web) frente a 6 del estudiante,
+4 del profesor y 5 del admin. Se investigó qué funciones tiene normalmente
+un administrativo de universidad (registraduría: cursos, matrículas,
+calendario académico; biblioteca: préstamos; atención: buzón de PQRS) y se
+confirmó que **`firestore.rules` ya permitía a staff/admin escribir en
+`courses`, `enrollments`, `calendarEvents`, `loans` y `contact_messages`
+desde el origen del proyecto** -- nunca existió la pantalla en la app para
+usar ese permiso. Se agregan 5 pantallas nuevas, todas con CRUD completo,
+probado de punta a punta contra Firestore real en un emulador (Pixel 8 API
+36):
+
+- **`ui/staff/ManageCoursesScreen.kt`** (nueva): crear/editar/borrar cursos
+  (nombre, código, créditos, profesor -- selector real de usuarios con rol
+  PROFESSOR, horario -- lista de franjas día/hora con selector de día).
+  `CourseRepository`: se agregan `updateCourse()`, `deleteCourse()` (borra
+  en cascada las matrículas del curso, si no quedaban matrículas huérfanas
+  apuntando a un curso ya inexistente).
+- **`ui/staff/ManageEnrollmentsScreen.kt`** (nueva): elegir un curso, ver sus
+  estudiantes matriculados, matricular uno nuevo (buscador en vivo por
+  nombre/correo que excluye a los ya matriculados) o desmatricular.
+  `CourseRepository`: se agregan `listEnrollmentsForCourse()` (para tener el
+  id de la matrícula, no solo el usuario) y `unenroll()`.
+- **`ui/staff/ManageCalendarScreen.kt`** (nueva): crear/editar/borrar eventos
+  del calendario académico institucional (antes el estudiante solo podía
+  VERLO, nadie podía mantenerlo actualizado desde la app). Usa
+  `DatePickerDialog` de Material3 (primer uso en el proyecto). Se agregan
+  `CalendarRepository.createEvent()/updateEvent()/deleteEvent()` y
+  `CalendarEvent.toMap()` en `FirestoreMappers.kt` (no existía).
+- **`ui/staff/ManageLoansScreen.kt`** (nueva): registrar un préstamo nuevo a
+  un estudiante (buscador en vivo + `DatePickerDialog` para la fecha de
+  vencimiento), marcarlo devuelto, o borrarlo. Antes solo el estudiante
+  podía ver/renovar SUS PROPIOS préstamos; no existía pantalla para que
+  Biblioteca los cree o los cierre. Se agregan
+  `LoanRepository.listAll()/create()/markReturned()/delete()` y
+  `Loan.toMap()` en `FirestoreMappers.kt`.
+- **`ui/staff/ContactMessagesScreen.kt`** (nueva) + **`domain/model/
+  ContactMessage.kt`** + **`data/repository/ContactMessageRepository.kt`**
+  (nuevos): buzón de los mensajes del formulario de contacto del sitio web
+  (`appeafit-web-backend`), colección compartida `contact_messages` --
+  el comentario en `firestore.rules` de esa colección literalmente decía
+  *"para que Administrativos puedan revisarlos"* desde el 2026-09-17, pero
+  nunca se construyó la pantalla. Permite marcar un mensaje como atendido
+  (campo `resolved`, no existe en los documentos que crea el backend web,
+  nace en `false` vía `getBoolean() ?: false`) o borrarlo.
+- **Cableado**: 5 rutas nuevas en `Routes.kt`, 5 `composable()` en
+  `StaffNavGraph.kt`, 5 `ServiceEntry` nuevas en `ServiceCatalog.kt`
+  (grupos: "Académico" para cursos/matrículas/calendario, "Biblioteca" para
+  préstamos, "Institucional" para el buzón de contacto), y
+  `AppContainer.contactMessageRepository`. Strings nuevas en español e
+  inglés para las 5 pantallas.
+- **No se tocó `firestore.rules`**: las reglas de todas estas colecciones
+  (`courses`, `enrollments`, `calendarEvents`, `loans`, `contact_messages`)
+  ya estaban desplegadas y ya cubrían exactamente lo que estas 5 pantallas
+  necesitan.
+
+**Verificado en emulador real** (no solo compilación): se instaló el APK
+debug, se inició sesión como `administrativo.demo@eafit.edu.co`, y se probó
+cada pantalla de punta a punta contra Firestore real: crear/editar (incluido
+asignar profesor y agregar un horario real)/borrar un curso; matricular y
+desmatricular un estudiante real; crear y borrar un evento de calendario
+real; crear un préstamo real, marcarlo devuelto, y borrarlo. Todos los datos
+de prueba creados durante la verificación se borraron al terminar, dejando
+el estado original de Firestore intacto.
+
+**Parte B — Fusión de `JuanmaBranch` (rebranding EAFIT → IAFIC):**
+
+`git fetch origin` reveló una rama nueva `JuanmaBranch` (2 commits: "Cambios
+al nombre del proyecto" y "Cambios al color del theme y logo") no fusionada
+a `main`. Se confirmó que es un rebranding real e intencional de la
+Universidad EAFIT a **IAFIC** (Corporación Universitaria Regional del
+Caribe, CURC-IAFIC, universidad real verificada en `https://www.iafic.edu.co/`,
+"Vigilada Mineducación"), pedido explícito de Santiago Guerrero Parrado tras
+descubrir que el proyecto se había construido para la universidad
+equivocada. `git merge origin/JuanmaBranch` se fusionó sin conflictos reales
+(auto-merge limpio en `strings.xml` porque cada rama tocaba renglones
+distintos) y trajo: nueva paleta de colores en `ui/theme/Color.kt` y
+`colors.xml` (azul marino `#002855`, gris oscuro `#111111`, verde `#009A44`
+como acentos, en vez del azul/negro anterior -- son tokens de tema
+GLOBALES, ya se aplican a los 4 roles sin trabajo adicional) y strings
+`app_name`/`auth_welcome_title`/etc. cambiados a "IAFIC".
+
+**Se completaron 3 cosas que `JuanmaBranch` dejó a medias** (cambios
+cosméticos de strings, pero no de la lógica funcional real):
+
+1. **`ui/auth/AuthViewModel.kt`**: `INSTITUTIONAL_DOMAIN` seguía en
+   `"@eafit.edu.co"` en código Kotlin (Juanma solo cambió el STRING del
+   mensaje de error a "@iafic.edu.co", no la validación real) -- con esto,
+   ningún correo `@iafic.edu.co` real podía registrarse ni iniciar sesión.
+   Corregido a `"@iafic.edu.co"`.
+2. **`app/src/main/res/values-en/strings.xml`**: `auth_error_invalid_domain`
+   en inglés seguía diciendo "@eafit.edu.co" (Juanma solo corrigió la
+   versión en español). Corregido.
+3. **`ui/carnet/CarnetScreen.kt`**: el carnet digital tenía "EAFIT" fijo en
+   el contenido del QR (`"EAFIT-ID:..."`) y en el texto para compartir
+   contacto (`"... · EAFIT"`), más el inicial de avatar por defecto ("E").
+   Cambiados a "IAFIC-ID:...", "... · IAFIC", e inicial "I".
+4. **`drawable/ic_launcher_background.xml`**: JuanmaBranch reemplazó por
+   error el fondo del ícono adaptativo con el MISMO monograma "I" del
+   foreground (copiado sin querer), dejando el ícono con fondo transparente
+   en vez de un color sólido. Corregido a un relleno sólido real con el
+   nuevo azul marino `#002855`.
+
+**Ícono y logo reales de IAFIC** (pedido explícito: *"entres a chrome y
+saques el logo de la IAFIC y lo pongas como logo e icono de la app"*): se
+descargó en vivo `https://www.iafic.edu.co/logo.png` (logo oficial real,
+"CURC-IAFIC", escudo con dos leones y corona) y se recortó/optimizó con
+`sharp` (mismo proceso que ya se usa en `appeafit-web-frontend`) para
+generar:
+- `drawable/ic_launcher_foreground.png` (nuevo, reemplaza el monograma
+  vector "I" de Juanma): el escudo real centrado en un lienzo transparente
+  de 432×432, dentro de la zona segura del ícono adaptativo.
+- `drawable/ic_splash_logo.png` (nuevo, reemplaza el vector): el escudo real
+  para la pantalla de splash (`windowSplashScreenAnimatedIcon`).
+- `drawable/ic_notification.png` (nuevo, reemplaza el vector): versión
+  pequeña (96×96) del escudo para el ícono de notificaciones -- Android
+  ignora el color RGB y usa solo el canal alfa para pintar el ícono de la
+  barra de estado, así que un PNG a color funciona igual que un vector
+  monocromático para este propósito.
+- El ícono legacy cuadrado (escudo sobre tarjeta blanca, 512×512) se generó
+  también pero no se integró a mipmaps porque `minSdk = 26` ya cubre el
+  ícono adaptativo (`mipmap-anydpi-v26`) para el 100% de los dispositivos
+  soportados -- no se necesitan buckets de densidad legacy.
+- No se tocó `applicationId`/`namespace` (`co.edu.eafit.appeafit`): ese
+  paquete está atado al `google-services.json` real del proyecto Firebase
+  `appeafit-297d5`; cambiarlo rompería Auth/Firestore/Messaging a menos que
+  se registre una app Android nueva en la consola de Firebase, que no se
+  pidió y queda fuera del alcance de esta sesión.
+
+**Verificado**: `./gradlew compileDebugKotlin` y `./gradlew assembleDebug`
+exitosos (BUILD SUCCESSFUL) después de la fusión y de todos los cambios de
+esta entrada. Por pedido explícito de Santiago Guerrero Parrado ("solo
+compila, si todo compila has push sin comprobación visual porque tenemos
+que pasar a exponer ya"), **no se hizo verificación visual del rebranding
+en emulador** -- las 5 pantallas nuevas de Administrativo sí se verificaron
+visualmente antes de este pedido (ver Parte A).
+
+**Pendiente para la próxima sesión**: verificación visual del rebranding
+completo (ícono real en el launcher, splash, colores en los 4 roles);
+revisar si faltan más menciones de "EAFIT" fuera de código/strings (ej.
+`README.md`, nombre de paquete/Firebase si algún día se decide migrar);
+`google-services.json` sigue apuntando al proyecto Firebase original
+(`appeafit-297d5`) -- confirmar con el equipo si ese proyecto de Firebase
+también debe renombrarse/migrarse o se mantiene igual mientras cambia solo
+la marca visible.

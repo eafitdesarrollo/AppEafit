@@ -44,7 +44,7 @@ import coil.compose.AsyncImage
 fun CarnetScreen(user: User) {
     val context = LocalContext.current
     val qrBitmap = remember(user.uid) {
-        QrCodeGenerator.generate("EAFIT-ID:${user.uid}:${user.institutionalId}")
+        QrCodeGenerator.generate("IAFIC-ID:${user.uid}:${user.institutionalId}")
     }
     val qrVisible = remember(user.uid) { MutableTransitionState(false).apply { targetState = true } }
 
@@ -68,7 +68,7 @@ fun CarnetScreen(user: User) {
             Surface(shape = CircleShape, color = Color.White, modifier = Modifier.size(96.dp)) {
                 androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Text(
-                        user.fullName.take(1).ifBlank { "E" },
+                        user.fullName.take(1).ifBlank { "I" },
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.headlineLarge
@@ -128,7 +128,7 @@ fun CarnetScreen(user: User) {
             onClick = {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "${user.fullName} · $roleLabel · ${user.institutionalId} · EAFIT")
+                    putExtra(Intent.EXTRA_TEXT, "${user.fullName} · $roleLabel · ${user.institutionalId} · IAFIC")
                 }
                 context.startActivity(Intent.createChooser(shareIntent, null))
             }

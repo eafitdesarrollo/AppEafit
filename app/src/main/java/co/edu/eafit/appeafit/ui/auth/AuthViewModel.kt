@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val INSTITUTIONAL_DOMAIN = "@eafit.edu.co"
+private const val INSTITUTIONAL_DOMAIN = "@iafic.edu.co"
 
 data class AuthUiState(
     val isLoading: Boolean = false,

@@ -30,7 +30,7 @@
     <string name="auth_reset_password_body">We\'ll send a link to your institutional email to reset your password.</string>
     <string name="auth_reset_password_button">Send link</string>
     <string name="auth_reset_password_sent">Link sent. Check your institutional email.</string>
-    <string name="auth_error_invalid_domain">You must use your institutional email @eafit.edu.co</string>
+    <string name="auth_error_invalid_domain">You must use your institutional email @iafic.edu.co</string>
     <string name="auth_error_generic">We couldn\'t complete the request. Please try again.</string>
 
     <!-- Common -->
