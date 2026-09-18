@@ -1851,11 +1851,64 @@ que pasar a exponer ya"), **no se hizo verificación visual del rebranding
 en emulador** -- las 5 pantallas nuevas de Administrativo sí se verificaron
 visualmente antes de este pedido (ver Parte A).
 
-**Pendiente para la próxima sesión**: verificación visual del rebranding
-completo (ícono real en el launcher, splash, colores en los 4 roles);
-revisar si faltan más menciones de "EAFIT" fuera de código/strings (ej.
-`README.md`, nombre de paquete/Firebase si algún día se decide migrar);
-`google-services.json` sigue apuntando al proyecto Firebase original
-(`appeafit-297d5`) -- confirmar con el equipo si ese proyecto de Firebase
-también debe renombrarse/migrarse o se mantiene igual mientras cambia solo
-la marca visible.
+**Pendiente para la próxima sesión**: revisar si faltan más menciones de
+"EAFIT" fuera de código/strings (ej. `README.md`, nombre de
+paquete/Firebase si algún día se decide migrar); `google-services.json`
+sigue apuntando al proyecto Firebase original (`appeafit-297d5`) --
+confirmar con el equipo si ese proyecto de Firebase también debe
+renombrarse/migrarse o se mantiene igual mientras cambia solo la marca
+visible.
+
+---
+
+### 2026-09-18 — Santiago Guerrero Parrado
+
+**Parte C: verificación visual del rebranding pendiente de la Parte B**
+(pedido explícito: *"bueno ahora si prueba la nueva version en el
+emmulador"*). Se instaló el APK en el emulador y se recorrió splash, Home,
+ID Card, Perfil y Edit personal data con capturas reales.
+
+**Hallazgo 1 -- corregido**: el fondo del ícono adaptativo
+(`ic_launcher_background.xml`) había quedado en azul marino sólido
+(`#002855`), el mismo tono que domina el escudo real de la IAFIC, así que
+el escudo casi desaparecía sobre su propio fondo (reportado por Santiago:
+*"el logo de la IAFIC le cambiaste los colores... por qué esta verde y
+azul?"* -- se confirmó descargando de nuevo `iafic.edu.co/logo.png` en vivo
+que el escudo real SÍ es azul marino + verde, sin ningún recoloreo de por
+medio; el problema real era solo el fondo del ícono). Cambiado a fondo
+blanco (`#FFFFFF`) para dar contraste. Verificado con zoom sobre captura
+del launcher tras reinstalar: escudo nítido y legible.
+
+**Hallazgo 2 -- no es bug de código, es dato de prueba**: en Carnet/Perfil,
+el avatar de respaldo (círculo con inicial) de la cuenta demo
+"Administrativo Demo" se veía en blanco. Se confirmó leyendo
+`CarnetScreen.kt` y `Theme.kt` que la lógica y los colores son correctos
+(`MaterialTheme.colorScheme.primary` es azul marino oscuro en ambos temas,
+nunca blanco sobre blanco). La causa real: el campo `photoUrl` de esa
+cuenta demo apunta a una imagen real subida por error durante pruebas
+anteriores de esta misma sesión (una captura de pantalla del estado vacío
+de notificaciones, "You're all caught up, no new notifications", quedó
+seleccionada sin querer en el selector de fotos del emulador). Se
+confirmó reproduciendo el mismo contenido exacto en tres pantallas
+distintas (Carnet, Perfil, Edit personal data), lo que descarta un glitch
+de renderizado y confirma que es el contenido real de la imagen. No se
+logró reemplazar la foto de forma confiable por automatización (el picker
+de fotos del emulador reordena su grilla cada vez que se toma una captura
+nueva, lo que hace la selección por coordenadas poco confiable) -- queda
+pendiente corregirla manualmente desde la app (Perfil → Editar datos
+personales → tocar el círculo → elegir otra foto) o limpiar el campo
+`photoUrl` directamente en Firestore para esa cuenta. No afecta cuentas
+reales ni ninguna otra cuenta demo.
+
+**Verificado**: splash con escudo real, Home con "IAFIC News" y colores
+correctos, ID Card y Perfil con paleta y textos correctos (solo el avatar
+de esa cuenta específica queda con la foto de prueba equivocada).
+`./gradlew assembleDebug` exitoso tras el fix del ícono (hubo que limpiar
+manualmente `app/build/intermediates/incremental/debug/mergeDebugResources`
+por un lock de archivos de OneDrive que hacía fallar el merge de recursos
+-- no relacionado con el cambio en sí).
+
+**Pendiente para la próxima sesión**: limpiar el `photoUrl` de la cuenta
+"Administrativo Demo" (Hallazgo 2); mismos pendientes de la Parte B
+(revisar menciones de "EAFIT" fuera de código, decidir si
+`appeafit-297d5` se migra).
