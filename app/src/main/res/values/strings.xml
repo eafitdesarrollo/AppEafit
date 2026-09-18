@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">EAFIT App</string>
-    <string name="default_notification_channel_id">eafit_general_channel</string>
-    <string name="default_notification_channel_name">Notificaciones EAFIT</string>
+    <string name="app_name">IAFIC App</string>
+    <string name="default_notification_channel_id">iafic_general_channel</string>
+    <string name="default_notification_channel_name">Notificaciones IAFIC</string>
 
     <!-- Navigation -->
     <string name="nav_inicio">Inicio</string>
@@ -11,10 +11,10 @@
     <string name="nav_perfil">Perfil</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">Bienvenido a EAFIT</string>
+    <string name="auth_welcome_title">Bienvenido a IAFIC</string>
     <string name="auth_welcome_subtitle">Inicia sesión con tu correo institucional</string>
     <string name="auth_email_label">Correo institucional</string>
-    <string name="auth_email_placeholder">nombre.apellido@eafit.edu.co</string>
+    <string name="auth_email_placeholder">nombre.apellido@iafic.edu.co</string>
     <string name="auth_password_label">Contraseña</string>
     <string name="auth_login_button">Iniciar sesión</string>
     <string name="auth_forgot_password">¿Olvidaste tu contraseña?</string>
@@ -30,7 +30,7 @@
     <string name="auth_reset_password_body">Te enviaremos un enlace a tu correo institucional para restablecer tu contraseña.</string>
     <string name="auth_reset_password_button">Enviar enlace</string>
     <string name="auth_reset_password_sent">Enlace enviado. Revisa tu correo institucional.</string>
-    <string name="auth_error_invalid_domain">Debes usar tu correo institucional @eafit.edu.co</string>
+    <string name="auth_error_invalid_domain">Debes usar tu correo institucional @iafic.edu.co</string>
     <string name="auth_error_generic">No pudimos completar la solicitud. Intenta de nuevo.</string>
 
     <!-- Common -->
@@ -106,7 +106,7 @@
     <!-- Home -->
     <string name="home_greeting">¡Qué gusto verte!</string>
     <string name="home_favorites">Favoritos</string>
-    <string name="home_news_section">Actualidad EAFIT</string>
+    <string name="home_news_section">Actualidad IAFIC</string>
     <string name="home_news_empty">Todavía no hay anuncios institucionales publicados</string>
 
     <!-- Roles -->
