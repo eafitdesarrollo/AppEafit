@@ -1972,3 +1972,26 @@ splash del sistema (círculo blanco + escudo grande sobre azul marino)
 como de la transición al splash de Compose (degradado azul, mismo círculo
 y escudo, spinner de carga) -- sin flash blanco entre ninguna de las
 pantallas.
+
+**Corrección posterior (mismo día)**: Santiago reportó que en la primera
+pantalla (splash del sistema) el escudo no quedaba centrado dentro del
+círculo, y que al agrandar el círculo el escudo se había quedado chico.
+Causa raíz: el recorte original del escudo (`extract({left:0, top:0,
+width:230, height:267})` sobre `iafic_logo_original.png`, 718x267) no era
+un recorte ajustado -- dejaba ~39px de margen vacío a la izquierda y
+además CORTABA ~7px del borde derecho del escudo (el escudo real ocupa
+de x=39 a x=237, no de x=0 a x=230), lo que producía el desalineamiento.
+Y como ese PNG con margen desparejo se usaba tal cual dentro de los
+círculos en Compose y en el ícono del splash del sistema, agrandar el
+contenedor solo agrandaba el margen vacío, no el escudo en sí.
+
+Fix: se escaneó pixel por pixel `iafic_logo_original.png` para encontrar
+el cuadro delimitador exacto del escudo (sin el logotipo de texto al
+lado): x de 39 a 237, y de 5 a 249. Se regeneraron `ic_splash_logo.png` y
+`ic_splash_os_icon.png` a partir de ese recorte exacto, con el escudo
+ocupando ahora la mayor parte de su propio lienzo (antes tenía margen
+interno desparejo) -- esto corrige el desalineamiento Y hace que el
+escudo se vea notablemente más grande en ambas pantallas de splash sin
+tocar el código de `SplashScreen.kt`. Verificado de nuevo con capturas en
+ráfaga: escudo centrado y grande tanto en el splash del sistema como en
+el de Compose.
