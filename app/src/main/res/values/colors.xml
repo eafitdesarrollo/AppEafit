@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="eafit_blue">#146AEF</color>
-    <color name="eafit_navy">#0A1130</color>
-    <color name="eafit_cyan">#00A9E0</color>
-    <color name="eafit_black">#0A0A0A</color>
-    <color name="eafit_white">#FFFFFF</color>
+    <!-- Colores base actualizados a la nueva paleta -->
+    <color name="eafit_blue">#002855</color> <!-- Nuevo Azul Marino -->
+    <color name="eafit_navy">#111111</color> <!-- Nuevo Gris Oscuro/Fondo -->
+    <color name="eafit_cyan">#009A44</color> <!-- Nuevo Verde para acentos -->
+    <color name="eafit_black">#000000</color> <!-- Negro puro -->
+    <color name="eafit_white">#FFFFFF</color> <!-- Blanco puro -->
+
+    <!-- Colores adicionales de la nueva paleta -->
+    <color name="iafic_orange">#B85C38</color>
+    <color name="iafic_forest_green">#2D6A4F</color>
 </resources>
