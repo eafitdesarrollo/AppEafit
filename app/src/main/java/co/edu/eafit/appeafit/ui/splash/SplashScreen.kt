@@ -6,15 +6,15 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,8 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import co.edu.eafit.appeafit.R
 import co.edu.eafit.appeafit.ui.components.GradientHeroBox
 import androidx.compose.animation.core.rememberInfiniteTransition
 
@@ -57,14 +58,18 @@ fun SplashScreen() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             androidx.compose.foundation.layout.Box(
-                modifier = Modifier.size(96.dp).background(Color.White.copy(alpha = ringAlpha), CircleShape),
+                modifier = Modifier.size(148.dp).background(Color.White.copy(alpha = ringAlpha), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.size(76.dp).background(Color.White.copy(alpha = 0.14f), CircleShape),
+                    modifier = Modifier.size(124.dp).background(Color.White, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("E", color = Color.White, fontWeight = FontWeight.Black, style = MaterialTheme.typography.displayLarge)
+                    Image(
+                        painter = painterResource(R.drawable.ic_splash_logo),
+                        contentDescription = null,
+                        modifier = Modifier.size(102.dp).padding(4.dp)
+                    )
                 }
             }
             androidx.compose.foundation.layout.Spacer(Modifier.height(28.dp))

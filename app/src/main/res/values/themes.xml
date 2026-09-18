@@ -4,11 +4,21 @@
         <item name="android:statusBarColor">@color/eafit_navy</item>
         <item name="android:navigationBarColor">@color/eafit_white</item>
         <item name="android:windowLightStatusBar">false</item>
+        <!-- Mismo azul marino que windowSplashScreenBackground: sin esto, el fondo
+             blanco por defecto de Theme.Material.Light se ve como un flash blanco
+             entre el splash del sistema (Theme.AppEafit.Splash) y el primer frame
+             de Compose (SplashScreen.kt, que ya pinta el degradado azul completo). -->
+        <item name="android:windowBackground">@color/eafit_navy</item>
     </style>
 
     <style name="Theme.AppEafit.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/eafit_navy</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <!-- ic_splash_os_icon.png ya trae el círculo blanco horneado detrás del
+             escudo (windowSplashScreenIconBackgroundColor no se veía en pruebas reales,
+             posible limitación de la librería de compat en este dispositivo/versión),
+             para que este splash del sistema y el de Compose (SplashScreen.kt, que
+             dibuja su propio círculo blanco) se vean como una sola pantalla continua. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_os_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.AppEafit</item>
     </style>
 </resources>

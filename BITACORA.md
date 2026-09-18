@@ -1912,3 +1912,63 @@ por un lock de archivos de OneDrive que hacía fallar el merge de recursos
 "Administrativo Demo" (Hallazgo 2); mismos pendientes de la Parte B
 (revisar menciones de "EAFIT" fuera de código, decidir si
 `appeafit-297d5` se migra).
+
+---
+
+### 2026-09-18 — Santiago Guerrero Parrado
+
+**Parte D: unificar las dos pantallas de arranque + logo más grande**
+(pedido explícito, con capturas propias del usuario adjuntas: *"cuando se
+esta abriendo la app, aparece un fondo blanco y el icono de la app, quiero
+que esa pagina desaparesca y mejor en la parte que viene despues... pon el
+icono de la app en vez de esa E con el circulo blanco y el background de
+la pagina con ese azul degradado que tiene"*, seguido de *"lo que quiero
+es que solo aparesca esta [captura del splash de Compose] y que el logo
+este un poco más grande"*).
+
+Contexto técnico: el arranque de la app tiene dos pantallas de splash en
+secuencia, inevitables en Android 12+ (no se puede saltar la del sistema):
+1. El splash del **sistema operativo** (`Theme.AppEafit.Splash`,
+   `windowSplashScreenAnimatedIcon`), que se dibuja antes de que el
+   proceso de la app termine de arrancar.
+2. El splash **de la propia app** (`SplashScreen.kt`, un composable en
+   Compose), que se muestra mientras se resuelve el estado de sesión
+   (Firebase Auth) antes de navegar a Login/Home.
+
+Lo que el usuario reportó como "fondo blanco con el ícono" era en
+realidad un salto entre 3 fondos distintos en 3 pasos del arranque: splash
+del sistema (azul marino sólido) → fondo blanco por defecto de
+`Theme.Material.Light` (el tema post-splash, visible una fracción de
+segundo antes de que Compose dibuje su primer frame) → splash de Compose
+(degradado azul). Y `SplashScreen.kt` todavía tenía una "E" de placeholder
+en vez del escudo real (quedó así de antes del rebranding a IAFIC).
+
+**Cambios**:
+- `themes.xml`: `Theme.AppEafit` (tema post-splash) ahora define
+  `android:windowBackground = @color/eafit_navy` -- mismo azul marino que
+  el splash del sistema, así que no hay flash blanco entre ambos splashes.
+- `themes.xml`: `Theme.AppEafit.Splash` ahora usa un ícono nuevo,
+  `ic_splash_os_icon.png` (escudo real ya con un círculo blanco horneado
+  detrás, generado con `sharp`), en vez del escudo simple sobre fondo
+  transparente. Se probó primero `windowSplashScreenIconBackgroundColor`
+  (el atributo "oficial" para esto) pero no se veía en pruebas reales en
+  el emulador -- posible limitación de la librería
+  `androidx.core:core-splashscreen` en este dispositivo/versión -- así
+  que se optó por hornear el círculo directamente en el PNG, que sí
+  funciona siempre sin depender de esa API.
+- `SplashScreen.kt`: los círculos y la imagen del escudo se agrandaron
+  (anillo exterior 112dp→148dp, círculo blanco 92dp→124dp, escudo
+  72dp→102dp) para que el logo se vea más grande, como pidió Santiago.
+
+Con esto, el splash del sistema y el de Compose ahora se ven como una
+sola pantalla continua (círculo blanco con el escudo sobre fondo azul
+marino/degradado), sin ningún flash blanco de por medio -- verificado con
+capturas en ráfaga (cada ~150ms) durante el arranque en frío en el
+emulador.
+
+**Verificado**: `./gradlew assembleDebug` exitoso; arranque en frío
+verificado con múltiples capturas en ráfaga en el emulador, tanto del
+splash del sistema (círculo blanco + escudo grande sobre azul marino)
+como de la transición al splash de Compose (degradado azul, mismo círculo
+y escudo, spinner de carga) -- sin flash blanco entre ninguna de las
+pantallas.
