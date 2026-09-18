@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">EAFIT App</string>
-    <string name="default_notification_channel_id">eafit_general_channel</string>
-    <string name="default_notification_channel_name">EAFIT Notifications</string>
+    <string name="app_name">IAFIC App</string>
+    <string name="default_notification_channel_id">iafic_general_channel</string>
+    <string name="default_notification_channel_name">IAFIC Notifications</string>
 
     <!-- Navigation -->
     <string name="nav_inicio">Home</string>
@@ -11,10 +11,10 @@
     <string name="nav_perfil">Profile</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">Welcome to EAFIT</string>
+    <string name="auth_welcome_title">Welcome to IAFIC</string>
     <string name="auth_welcome_subtitle">Sign in with your institutional email</string>
     <string name="auth_email_label">Institutional email</string>
-    <string name="auth_email_placeholder">first.last@eafit.edu.co</string>
+    <string name="auth_email_placeholder">first.last@iafic.edu.co</string>
     <string name="auth_password_label">Password</string>
     <string name="auth_login_button">Sign in</string>
     <string name="auth_forgot_password">Forgot your password?</string>
@@ -111,7 +111,7 @@
     <!-- Home -->
     <string name="home_greeting">Great to see you!</string>
     <string name="home_favorites">Favorites</string>
-    <string name="home_news_section">EAFIT News</string>
+    <string name="home_news_section">IAFIC News</string>
     <string name="home_news_empty">No institutional announcements have been published yet</string>
 
     <!-- Roles -->
