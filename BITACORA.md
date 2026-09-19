@@ -2042,3 +2042,127 @@ correctamente a `AcademicCalendarScreen`. No se verificó visualmente en
 los otros 3 roles por no tener sus credenciales a mano en esa sesión del
 celular, pero la lógica es la misma para los 4 (`when (user.role)`
 exhaustivo, sin casos especiales de datos).
+
+---
+
+### 2026-09-18 — Santiago Guerrero Parrado
+
+**Parte F: revisión pedida por Santiago tras varios reportes juntos**
+(*"en la cuenta de estudiante... aparecen notas de álgebra lineal... pero
+en calculadora de promedio no hay nada... y en la evaluación docente dice
+que no tengo cursos inscritos... y en el horario no me aparece... también
+revisa la base de datos en firebase porque parece haber dos versiones...
+la foto de perfil se demora muchísimo... revisa el github... y las
+imágenes no deben pedirle al servidor en cada vistazo"*).
+
+**🔴 HALLAZGO CRÍTICO -- bloquea TODO login nuevo, requiere acción fuera
+de este repo:** al probar un login real (cerrar sesión y volver a
+entrar) en el celular físico de Santiago, Firebase Auth devolvió:
+
+```
+Permission denied:Consumer 'api_key:AIzaSyBlPI2jMjbV6JBqzTOZuMsfU8bMwIo6kz4' has been suspended.
+```
+
+(capturado también en logcat: `RecaptchaCallWrapper: Initial task failed
+for action RecaptchaAction(action=signInWithPassword)`). Esto **no es un
+bug de código** -- es la API key de Firebase del proyecto `appeafit-297d5`
+suspendida a nivel de Google Cloud. Nadie lo había notado porque toda
+sesión de prueba hasta ahora ya estaba logueada de antes (Firebase Auth
+reutiliza el token guardado localmente sin volver a llamar
+`signInWithPassword`); en cuanto a Santiago le pedí cerrar sesión para
+probar con la cuenta de Administrativo, **su celular quedó sin poder
+volver a iniciar sesión con NINGUNA cuenta** hasta que esto se arregle.
+Cualquier estudiante/staff real que instale la app o cierre sesión hoy
+tendría exactamente el mismo problema. **Requiere que alguien con acceso
+a la consola de Google Cloud del proyecto `appeafit-297d5`
+(console.cloud.google.com, cuenta `eafitdesarrollo@gmail.com` según el
+comentario de `ImageKitClient.kt`) revise por qué esa API key está
+suspendida** (facturación, un aviso de abuso, o alguien la deshabilitó a
+mano en APIs & Services → Credentials) y la reactive o genere una nueva y
+la baje a `google-services.json`. Fuera del alcance de este repo/sesión.
+
+**Hallazgo 2 -- diagnosticado, causa raíz confirmada por lectura de
+código (no se pudo verificar en vivo por el Hallazgo 1 de arriba, que
+bloqueó el re-login como Administrativo antes de poder revisar
+matrículas):** "Mis notas" muestra notas de Álgebra Lineal y Desarrollo
+de Aplicaciones porque `GradesViewModel` lee la colección `grades`
+directo por `studentId`, sin pasar por matrícula. En cambio, Calculadora
+de promedio (`GpaCalculatorViewModel`), Horario (`ScheduleViewModel`) y
+Evaluación docente (reutiliza `ScheduleViewModel`) los tres construyen su
+lista de cursos a partir de `courseRepository.observeCachedForStudent`,
+que solo devuelve cursos con un documento en `enrollments` para ese
+`studentId` -- **completamente independiente de si existen notas para
+ese curso**. Conclusión: la cuenta `estudiante.demo@eafit.edu.co` tiene
+documentos de `grades` para esos dos cursos pero le faltan los
+documentos de `enrollments` correspondientes (o esos `enrollments`
+apuntan a un `courseId` que no es el mismo que usan las notas) --
+consistente con que Santiago vea "dos versiones" de un mismo curso en la
+consola de Firebase (un curso al que la nota apunta, y otro -- o
+ninguno -- al que la matrícula apunta). **Pendiente**: una vez
+resuelto el Hallazgo 1 y se pueda volver a entrar como Administrativo,
+usar "Manage enrollments" (ya construido) para matricular a
+`estudiante.demo` en los cursos correctos, y revisar en "Manage courses"
+si hay cursos duplicados con nombres iguales pero IDs distintos.
+
+**Hallazgo 3 -- corregido:** el cambio de dominio institucional a
+`@iafic.edu.co` (de la sesión de rebranding) bloqueaba el login de las 4
+cuentas demo y de cualquier cuenta real ya existente, todas siguen
+siendo `@eafit.edu.co` en Firebase Auth y no hay forma de renombrar su
+email sin Admin SDK. `AuthViewModel.kt`: login y recuperar contraseña
+ahora aceptan ambos dominios (`isExistingAccountEmail`); registro de
+cuentas nuevas sigue exigiendo solo `@iafic.edu.co`. Este bug es
+justamente el que dejó ver el Hallazgo 1 (antes de este fix, ni siquiera
+se llegaba a llamar a Firebase Auth).
+
+**Hallazgo 4 -- corregido:** en `LoginScreen.kt` seguía apareciendo el
+círculo con la letra "E" de placeholder (no se había limpiado en la
+sesión del rebranding, solo se corrigió en `CarnetScreen.kt` y
+`SplashScreen.kt`) -- reemplazado por el escudo real de la IAFIC.
+
+**Hallazgo 5 -- corregido (rendimiento real, no solo percepción):**
+`ImageKitClient.upload()` leía la imagen elegida por el usuario tal cual
+(bytes completos, sin comprimir) antes de subirla -- una foto de cámara
+moderna puede pesar 5-15MB, lo que explica por qué "guardar cambios" en
+Editar perfil se sentía colgado. Se agregó compresión del lado del
+cliente (`compressImage()`: reduce a máx. 1280px de lado más largo --
+1920px para hero slides -- y recomprime a JPEG calidad 85 antes de
+subir) y timeouts explícitos de red (15s conexión / 30s lectura-escritura,
+antes usaba los de OkHttp por defecto sin declararlos) para que, si la
+red falla, el usuario vea un error claro en vez de un spinner indefinido.
+No se pudo re-verificar en vivo el tiempo de guardado por el Hallazgo 1
+(bloquea entrar a Editar perfil con sesión nueva), pero la causa raíz
+(subir bytes sin comprimir) es clara por lectura de código.
+
+**Hallazgo 6 -- ya estaba bien, se hizo explícito:** revisé si "cada
+vistazo de imágenes" golpea el servidor en cada carga, como pidió
+Santiago. En el celular: Coil (librería de imágenes) ya cachea en memoria
+y disco por defecto, y no se encontró ningún parámetro que rompa el
+cacheo (ej. timestamps en la URL) en ningún `AsyncImage` de la app. Se
+hizo explícito de todos modos en `EafitApplication.kt` (ahora implementa
+`ImageLoaderFactory` con caché de disco de 100MB y `respectCacheHeaders`)
+para que quede documentado en código y no dependa de un default
+implícito. En la página web: las imágenes son archivos estáticos locales
+en `public/images/...` (copiados durante el crawl de la sesión anterior),
+no hay ningún `<img>` ni backend que le pida imágenes en vivo al sitio
+real de la IAFIC/EAFIT en cada visita -- ya es seguro tal como está.
+
+**Sobre "creo que Juanma hizo cambios con las imágenes"**: revisando
+`git log` con autoría, el reemplazo de Firebase Storage por ImageKit
+(commits `da95b8d`, `7efbf56`, `9e0a9f6`) está firmado por "Santiago
+Guerrero Parrado" con el correo `guerreroparradosantiago@gmail.com` --
+NO son de JuanmaBranch, que solo tocó archivos de tema/color/strings (ya
+documentado en la Parte B). Puede que la confusión venga de ahí, o de
+otra sesión anterior que no dejó registro claro de quién ejecutó qué.
+
+**Sobre GitHub**: `git fetch origin` confirmó que `origin/main` ya
+estaba al día con el local (nada nuevo que nadie más haya pusheado desde
+el último push de esta sesión), y `origin/JuanmaBranch` sigue
+completamente fusionado en `main` (`git merge-base --is-ancestor` lo
+confirma) -- no había nada pendiente de traer.
+
+**Pendiente urgente para la próxima sesión**: resolver el Hallazgo 1
+(fuera del alcance de este repo) es el bloqueador de todo lo demás;
+después, matricular a `estudiante.demo` en Álgebra Lineal y Desarrollo de
+Aplicaciones vía "Manage enrollments" y revisar cursos duplicados en
+"Manage courses" (Hallazgo 2); volver a verificar en vivo el tiempo de
+guardado de foto de perfil ya con la compresión nueva (Hallazgo 5).

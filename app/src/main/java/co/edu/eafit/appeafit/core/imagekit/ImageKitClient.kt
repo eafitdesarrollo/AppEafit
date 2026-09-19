@@ -1,7 +1,11 @@
 package co.edu.eafit.appeafit.core.imagekit
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Credentials
@@ -34,7 +38,17 @@ data class ImageUploadResult(val url: String, val fileId: String)
  */
 class ImageKitClient(private val context: Context) {
 
-    private val client = OkHttpClient()
+    // Timeouts explícitos: el cliente por defecto de OkHttp ya tiene 10s de conexión/
+    // lectura/escritura, pero se dejan explícitos aquí (con algo más de margen para
+    // escritura, ya que subir una imagen puede tardar más que una llamada normal a la
+    // API) para que un usuario nunca se quede viendo un spinner indefinidamente si la
+    // red está caída -- después de este tiempo, upload() falla con un error claro en
+    // vez de colgarse para siempre.
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     private fun signature(token: String, expire: Long): String {
         val mac = Mac.getInstance("HmacSHA1")
@@ -44,22 +58,67 @@ class ImageKitClient(private val context: Context) {
     }
 
     /**
+     * Reduce la imagen a como máximo [maxDimension] px de lado más largo y la recomprime
+     * a JPEG -- una foto tomada con la cámara del celular puede pesar 5-15MB a resolución
+     * completa, y subir eso tal cual (sin comprimir) es lo que hacía que "guardar cambios"
+     * en el perfil se sintiera colgado durante mucho tiempo en redes lentas. Se decodifica
+     * primero solo los bounds (inJustDecodeBounds) para calcular inSampleSize y no cargar
+     * el bitmap completo en memoria si no hace falta (evita OutOfMemoryError con fotos
+     * muy grandes). Si algo falla al decodificar (ej. es un video, no una imagen), se
+     * devuelve null y el llamador sube los bytes originales sin tocar.
+     */
+    private fun compressImage(bytes: ByteArray, maxDimension: Int): ByteArray? = runCatching {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+
+        var sampleSize = 1
+        while (bounds.outWidth / (sampleSize * 2) >= maxDimension && bounds.outHeight / (sampleSize * 2) >= maxDimension) {
+            sampleSize *= 2
+        }
+        val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sampleSize })
+            ?: return null
+
+        val scale = maxDimension.toFloat() / maxOf(decoded.width, decoded.height)
+        val resized = if (scale < 1f) {
+            Bitmap.createScaledBitmap(decoded, (decoded.width * scale).toInt(), (decoded.height * scale).toInt(), true)
+        } else {
+            decoded
+        }
+
+        ByteArrayOutputStream().use { output ->
+            resized.compress(Bitmap.CompressFormat.JPEG, 85, output)
+            if (resized !== decoded) decoded.recycle()
+            resized.recycle()
+            output.toByteArray()
+        }
+    }.getOrNull()
+
+    /**
      * Sube [uri] a la carpeta [folder] con el nombre [fileName]. Con
      * [useUniqueFileName] = false y el mismo folder+fileName de una subida anterior,
      * ImageKit sobreescribe el archivo viejo en el mismo lugar (no queda ningún archivo
      * huérfano) -- se usa así para fotos de perfil, donde cada usuario tiene un slot fijo.
      * Para imágenes nuevas de verdad (anuncios) se deja useUniqueFileName = true y se
      * guarda el fileId devuelto para poder borrar el archivo explícitamente más adelante.
+     *
+     * [compressImage] debe ser `false` para archivos que no son imágenes estáticas (ej.
+     * los videos de hero slides) -- para el resto, se recomprime antes de subir (ver
+     * [compressImage] función privada) para no depender de subir la foto a resolución de
+     * cámara completa.
      */
     suspend fun upload(
         uri: Uri,
         folder: String,
         fileName: String,
-        useUniqueFileName: Boolean = true
+        useUniqueFileName: Boolean = true,
+        compressImage: Boolean = true,
+        maxDimension: Int = 1280
     ): Result<ImageUploadResult> = withContext(Dispatchers.IO) {
         runCatching {
-            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            val originalBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                 ?: error("No se pudo leer la imagen seleccionada")
+            val bytes = if (compressImage) compressImage(originalBytes, maxDimension) ?: originalBytes else originalBytes
             val token = UUID.randomUUID().toString()
             val expire = (System.currentTimeMillis() / 1000) + 2400
             val sig = signature(token, expire)

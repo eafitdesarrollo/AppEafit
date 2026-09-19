@@ -339,7 +339,9 @@ fun ManageHeroSlidesScreen(container: AppContainer, onBack: () -> Unit) {
                                 container.imageKitClient.upload(
                                     uri = pickedUri,
                                     folder = "appeafit/hero_slides",
-                                    fileName = "hero_${System.currentTimeMillis()}.$extension"
+                                    fileName = "hero_${System.currentTimeMillis()}.$extension",
+                                    compressImage = !mediaIsVideo,
+                                    maxDimension = 1920
                                 ).onSuccess { result ->
                                     // Se borra el archivo anterior DESPUÉS de que el nuevo ya
                                     // subió con éxito -- si la subida nueva fallara, el slide

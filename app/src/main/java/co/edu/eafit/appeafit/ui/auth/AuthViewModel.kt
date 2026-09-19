@@ -13,6 +13,14 @@ import kotlinx.coroutines.launch
 
 private const val INSTITUTIONAL_DOMAIN = "@iafic.edu.co"
 
+// Las cuentas creadas antes del rebranding a IAFIC (las 4 demo y cualquier cuenta real
+// ya registrada) siguen existiendo en Firebase Auth con el dominio viejo -- no hay forma
+// de renombrar su email sin acceso a Admin SDK (no disponible, ver BITACORA), así que
+// login y recuperar contraseña deben seguir aceptando ambos dominios o esas cuentas
+// quedan bloqueadas para siempre. Registro de cuentas NUEVAS sí exige solo el dominio
+// nuevo, porque de ahí en adelante todo alumno/staff nuevo es institucionalmente IAFIC.
+private const val LEGACY_INSTITUTIONAL_DOMAIN = "@eafit.edu.co"
+
 data class AuthUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -26,9 +34,15 @@ class AuthViewModel(private val container: AppContainer) : ViewModel() {
 
     fun isInstitutionalEmail(email: String) = email.trim().endsWith(INSTITUTIONAL_DOMAIN, ignoreCase = true)
 
+    private fun isExistingAccountEmail(email: String): Boolean {
+        val trimmed = email.trim()
+        return trimmed.endsWith(INSTITUTIONAL_DOMAIN, ignoreCase = true) ||
+            trimmed.endsWith(LEGACY_INSTITUTIONAL_DOMAIN, ignoreCase = true)
+    }
+
     fun login(email: String, password: String, onSuccess: () -> Unit) {
         val trimmedEmail = email.trim()
-        if (!isInstitutionalEmail(trimmedEmail)) {
+        if (!isExistingAccountEmail(trimmedEmail)) {
             _uiState.update { it.copy(errorMessage = "Debes usar tu correo institucional $INSTITUTIONAL_DOMAIN") }
             return
         }
@@ -103,7 +117,7 @@ class AuthViewModel(private val container: AppContainer) : ViewModel() {
 
     fun sendPasswordReset(email: String) {
         val trimmedEmail = email.trim()
-        if (!isInstitutionalEmail(trimmedEmail)) {
+        if (!isExistingAccountEmail(trimmedEmail)) {
             _uiState.update { it.copy(errorMessage = "Debes usar tu correo institucional $INSTITUTIONAL_DOMAIN") }
             return
         }
