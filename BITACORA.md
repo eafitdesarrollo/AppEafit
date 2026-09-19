@@ -2060,7 +2060,7 @@ de este repo:** al probar un login real (cerrar sesión y volver a
 entrar) en el celular físico de Santiago, Firebase Auth devolvió:
 
 ```
-Permission denied:Consumer 'api_key:AIzaSyBlPI2jMjbV6JBqzTOZuMsfU8bMwIo6kz4' has been suspended.
+Permission denied:Consumer 'api_key:AIzaSy...[REDACTADO -- ver google-services.json local, NUNCA pegar la clave completa acá, este archivo es público]' has been suspended.
 ```
 
 (capturado también en logcat: `RecaptchaCallWrapper: Initial task failed
